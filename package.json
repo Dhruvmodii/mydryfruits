@@ -1,0 +1,32 @@
+{
+  "name": "mydryfruits",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c green,cyan \"npm run dev -w @mydryfruits/api\" \"npm run dev -w @mydryfruits/web\"",
+    "dev:api": "npm run dev -w @mydryfruits/api",
+    "dev:web": "npm run dev -w @mydryfruits/web",
+    "build": "npm run build -w @mydryfruits/db && npm run build -w @mydryfruits/api && npm run build -w @mydryfruits/web",
+    "start": "concurrently -n api,web -c green,cyan \"npm run start -w @mydryfruits/api\" \"npm run start -w @mydryfruits/web\"",
+    "start:api": "npm run start -w @mydryfruits/api",
+    "start:web": "npm run start -w @mydryfruits/web",
+    "db:generate": "npm run generate -w @mydryfruits/db",
+    "db:push": "npm run push -w @mydryfruits/db",
+    "db:migrate": "npm run migrate -w @mydryfruits/db",
+    "db:migrate:deploy": "npm run migrate:deploy -w @mydryfruits/db",
+    "db:seed": "npm run seed -w @mydryfruits/db",
+    "db:studio": "npm run studio -w @mydryfruits/db",
+    "postinstall": "npm run generate -w @mydryfruits/db"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

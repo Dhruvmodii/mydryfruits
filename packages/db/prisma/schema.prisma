@@ -1,0 +1,298 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String   @default("Admin")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Category {
+  id           String    @id @default(cuid())
+  name         String
+  slug         String    @unique
+  description  String?
+  imageUrl     String?
+  iconUrl      String?
+  bannerUrl    String?
+  seoTitle     String?
+  seoDescription String?
+  productCount Int       @default(0)
+  displayOrder Int       @default(0)
+  hidden       Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  products     Product[]
+}
+
+model Product {
+  id              String         @id @default(cuid())
+  name            String
+  slug            String         @unique
+  description     String?
+  localName       String?
+  pricePerKg      Decimal       
+  imageUrl        String?
+  alternateNames  String  @default("[]")
+  benefits        String?
+  storageTips     String?
+  nutrition       Json?
+  origin          String?
+  shelfLife       String?
+  inStock         Boolean        @default(true)
+  stockQty        Int            @default(100)
+  hidden          Boolean        @default(false)
+  onDemand        Boolean        @default(false)
+  isFeatured      Boolean        @default(false)
+  isBestSeller    Boolean        @default(false)
+  isTrending      Boolean        @default(false)
+  isNewArrival    Boolean        @default(false)
+  isPremium       Boolean        @default(false)
+  discountPercent Int            @default(0)
+  displayOrder    Int            @default(0)
+  rating          Float          @default(4.8)
+  reviewCount     Int            @default(0)
+  categoryId      String
+  category        Category       @relation(fields: [categoryId], references: [id])
+  images          ProductImage[]
+  collectionItems CollectionItem[]
+  orderItems      OrderItem[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([categoryId])
+  @@index([name])
+  @@index([isFeatured, isBestSeller, isTrending, isNewArrival])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  url       String
+  alt       String?
+  sortOrder Int      @default(0)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Collection {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  description String?
+  imageUrl    String?
+  benefitTag  String?
+  price       Decimal?        
+  hidden      Boolean          @default(false)
+  displayOrder Int             @default(0)
+  items       CollectionItem[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model CollectionItem {
+  id           String     @id @default(cuid())
+  collectionId String
+  productId    String
+  weightGrams  Int        @default(250)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, productId])
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PACKED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Customer {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  addressLine1 String?  @db.Text
+  addressLine2 String?  @db.Text
+  city         String?
+  state        String?
+  pincode      String?
+  country      String?  @default("India")
+  totalSpent   Decimal  @default(0)
+  orderCount   Int      @default(0)
+  lastOrderAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  orders       Order[]
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  status          OrderStatus @default(PENDING)
+  customerName    String
+  customerEmail   String
+  addressLine1    String
+  addressLine2    String?
+  city            String
+  state           String
+  pincode         String
+  country         String      @default("India")
+  subtotal        Decimal    
+  discount        Decimal     @default(0)
+  deliveryCharge  Decimal     @default(0)
+  tax             Decimal     @default(0)
+  total           Decimal    
+  couponCode      String?
+  estimatedDelivery String?
+  notes           String?
+  invoiceSentAt   DateTime?
+  customerId      String?
+  customer        Customer?   @relation(fields: [customerId], references: [id])
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([customerEmail])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  productId   String?
+  productName String
+  imageUrl    String?
+  weightGrams Int
+  unitPrice   Decimal
+  lineTotal   Decimal
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+}
+
+model BulkInquiry {
+  id               String   @id @default(cuid())
+  name             String
+  email            String
+  productId        String?
+  productName      String
+  requiredQuantity String
+  message          String?
+  status           String   @default("NEW")
+  convertedOrderId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Coupon {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  type           String
+  value          Decimal  
+  minPurchase    Decimal   @default(0)
+  maxUses        Int?
+  usedCount      Int       @default(0)
+  expiresAt      DateTime?
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  customerName String
+  rating     Int
+  comment    String
+  productName String?
+  hidden     Boolean  @default(false)
+  displayOrder Int    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Faq {
+  id           String   @id @default(cuid())
+  question     String
+  answer       String
+  displayOrder Int      @default(0)
+  hidden       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model HomepageSection {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  title     String?
+  content   Json
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  url       String
+  publicId  String?
+  type      String   @default("image")
+  alt       String?
+  bytes     Int?
+  createdAt DateTime @default(now())
+}
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  name      String
+  subject   String   @db.Text
+  htmlBody  String   @db.LongText
+  updatedAt DateTime @updatedAt
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model SeoPage {
+  id          String   @id @default(cuid())
+  path        String   @unique
+  title       String?
+  description String?
+  keywords    String?
+  ogImage     String?
+  canonical   String?
+  schemaJson  Json?
+  updatedAt   DateTime @updatedAt
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  type      String
+  path      String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([type, createdAt])
+}
+
