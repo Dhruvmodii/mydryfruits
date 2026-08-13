@@ -1,0 +1,4 @@
+{
+  "installCommand": "cd ../.. && npm ci --include=dev",
+  "buildCommand": "cd ../.. && npm run generate -w @mydryfruits/db && npm run build -w @mydryfruits/web"
+}

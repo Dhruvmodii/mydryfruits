@@ -19,8 +19,7 @@
     "db:migrate": "npm run migrate -w @mydryfruits/db",
     "db:migrate:deploy": "npm run migrate:deploy -w @mydryfruits/db",
     "db:seed": "npm run seed -w @mydryfruits/db",
-    "db:studio": "npm run studio -w @mydryfruits/db",
-    "postinstall": "npm run generate -w @mydryfruits/db"
+    "db:studio": "npm run studio -w @mydryfruits/db"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
