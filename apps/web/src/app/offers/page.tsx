@@ -4,14 +4,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api";
 
+type OffersData = {
+  seasonal?: { banners?: { title: string; subtitle: string; href: string }[] };
+  coupons?: { code: string; type: string; value: number; minPurchase: number }[];
+};
+
 export default function OffersPage() {
-  const [data, setData] = useState<{
-    seasonal?: { banners?: { title: string; subtitle: string; href: string }[] };
-    coupons?: { code: string; type: string; value: number; minPurchase: number }[];
-  } | null>(null);
+  const [data, setData] = useState<OffersData | null>(null);
 
   useEffect(() => {
-    apiClient("/api/storefront/offers").then(setData);
+    apiClient<OffersData>("/api/storefront/offers").then(setData);
   }, []);
 
   return (
