@@ -19,34 +19,54 @@ const sans = DM_Sans({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: `${SITE_NAME} — Premium Dry Fruits Delivered Fresh`,
-    template: `%s | ${SITE_NAME}`,
-  },
-  description:
-    "Shop premium almonds, cashews, pistachios, dates and healthy snacks. Fresh stock, natural quality, fast delivery.",
-  openGraph: {
-    siteName: SITE_NAME,
-    type: "website",
-  },
+export const revalidate = 60;
+
+type StorefrontLite = {
+  categories: { name: string; slug: string }[];
+  settings: {
+    policies?: Record<string, string>;
+    branding?: { faviconUrl?: string };
+  };
 };
 
-async function getFooterData() {
+async function getStorefrontLite(): Promise<StorefrontLite> {
   try {
-    const data = await api<{
-      categories: { name: string; slug: string }[];
-      settings: { policies?: Record<string, string> };
-    }>("/api/storefront");
-    return data;
+    return await api<StorefrontLite>("/api/storefront");
   } catch {
     return { categories: [], settings: {} };
   }
 }
 
+export async function generateMetadata(): Promise<Metadata> {
+  const data = await getStorefrontLite();
+  const faviconUrl = data.settings?.branding?.faviconUrl?.trim();
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: `${SITE_NAME} — Premium Dry Fruits Delivered Fresh`,
+      template: `%s | ${SITE_NAME}`,
+    },
+    description:
+      "Shop premium almonds, cashews, pistachios, dates and healthy snacks. Fresh stock, natural quality, fast delivery.",
+    openGraph: {
+      siteName: SITE_NAME,
+      type: "website",
+    },
+    ...(faviconUrl
+      ? {
+          icons: {
+            icon: [{ url: faviconUrl }],
+            shortcut: faviconUrl,
+            apple: faviconUrl,
+          },
+        }
+      : {}),
+  };
+}
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const data = await getFooterData();
+  const data = await getStorefrontLite();
   return (
     <html lang="en">
       <body className={`${display.variable} ${sans.variable} min-h-screen antialiased`}>

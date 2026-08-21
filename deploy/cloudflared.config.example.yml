@@ -1,0 +1,13 @@
+# Example Cloudflare Tunnel config (Windows).
+# 1. Replace TUNNEL_ID with your tunnel UUID from: cloudflared tunnel create mydryfruits
+# 2. Save as C:\cloudflared\config.yml
+
+tunnel: TUNNEL_ID
+credentials-file: C:\Users\dhruv\.cloudflared\TUNNEL_ID.json
+
+ingress:
+  - hostname: dhruvmodi.online
+    service: http://127.0.0.1:3000
+  - hostname: www.dhruvmodi.online
+    service: http://127.0.0.1:3000
+  - service: http_status:404

@@ -1,4 +1,4 @@
-import { API_URL } from "./constants";
+import { getApiBaseUrl } from "./constants";
 
 type FetchOptions = RequestInit & { token?: string };
 
@@ -11,7 +11,7 @@ export async function api<T>(path: string, options: FetchOptions = {}): Promise<
     (headers as Record<string, string>)["Authorization"] = `Bearer ${options.token}`;
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${getApiBaseUrl()}${path}`, {
     ...options,
     headers,
     credentials: "include",
@@ -33,7 +33,7 @@ export async function apiClient<T>(path: string, options: FetchOptions = {}): Pr
   if (options.token) {
     (headers as Record<string, string>)["Authorization"] = `Bearer ${options.token}`;
   }
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${getApiBaseUrl()}${path}`, {
     ...options,
     headers,
     credentials: "include",

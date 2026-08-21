@@ -76,4 +76,38 @@ export async function uploadImageBuffer(
   return saveToDisk(buffer, mime);
 }
 
+/** Favicon/branding assets: fixed path so re-uploads do not fill the disk. */
+export async function uploadFaviconBuffer(buffer: Buffer, mime = "image/png") {
+  const dir = path.join(env.uploadDir, "branding");
+  fs.mkdirSync(dir, { recursive: true });
+
+  const ext = mime.includes("ico")
+    ? ".ico"
+    : mime.includes("webp")
+      ? ".webp"
+      : mime.includes("svg")
+        ? ".svg"
+        : mime.includes("jpeg") || mime.includes("jpg")
+          ? ".jpg"
+          : ".png";
+
+  // Remove previous favicon variants so only one file remains
+  if (fs.existsSync(dir)) {
+    for (const name of fs.readdirSync(dir)) {
+      if (name.startsWith("favicon.")) {
+        fs.unlinkSync(path.join(dir, name));
+      }
+    }
+  }
+
+  const filename = `favicon${ext}`;
+  await fs.promises.writeFile(path.join(dir, filename), buffer);
+  const relative = `/uploads/branding/${filename}`;
+  const v = Date.now();
+  return {
+    url: `${env.publicApiUrl}${relative}?v=${v}`,
+    publicId: relative,
+  };
+}
+
 export { cloudinaryConfigured };

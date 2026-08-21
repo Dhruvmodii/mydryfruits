@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { API_URL } from "@/lib/constants";
+import { getApiBaseUrl } from "@/lib/constants";
 
 const TOKEN_KEY = "mydryfruits_admin_token";
 
@@ -41,7 +41,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       router.replace("/admin/login");
       return;
     }
-    fetch(`${API_URL}/api/auth/me`, {
+    fetch(`${getApiBaseUrl()}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
       credentials: "include",
     })
@@ -106,7 +106,7 @@ export function useAdminToken() {
 
 export async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem(TOKEN_KEY) || "";
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${getApiBaseUrl()}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -118,7 +118,7 @@ export async function adminFetch<T>(path: string, options: RequestInit = {}): Pr
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || "Request failed");
+    throw new Error(body.error || `Request failed (${res.status})`);
   }
   if (res.headers.get("content-type")?.includes("application/json")) {
     return res.json();

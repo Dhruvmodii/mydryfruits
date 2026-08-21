@@ -32,6 +32,12 @@ router.post(
 
     const business = await prisma.siteSetting.findUnique({ where: { key: "business" } });
     const biz = (business?.value as { email?: string }) || {};
+    const { env } = await import("../config");
+    const candidate = (biz.email || env.adminEmail || "").toLowerCase();
+    const adminTo =
+      candidate.includes("@") && !candidate.endsWith("@mydryfruits.com")
+        ? candidate
+        : env.adminEmail;
 
     void Promise.allSettled([
       sendTemplatedEmail({
@@ -43,7 +49,7 @@ router.post(
           requiredQuantity: inquiry.requiredQuantity,
         },
       }),
-      sendRawAdmin(biz.email || "admin@mydryfruits.com", inquiry),
+      sendRawAdmin(adminTo, inquiry),
     ]).then((results) => {
       for (const r of results) {
         if (r.status === "rejected") console.error("[bulk:notify]", r.reason);

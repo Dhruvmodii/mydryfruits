@@ -10,14 +10,18 @@ router.post(
   "/validate",
   validateBody(z.object({ code: z.string().min(2), subtotal: z.number().nonnegative() })),
   async (req, res) => {
+    const now = new Date();
     const coupon = await prisma.coupon.findFirst({
       where: {
         code: req.body.code.toUpperCase(),
         active: true,
-        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        AND: [
+          { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+          { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+        ],
       },
     });
-    if (!coupon) return res.status(400).json({ error: "Invalid coupon" });
+    if (!coupon) return res.status(400).json({ error: "Invalid or expired coupon" });
     if (coupon.maxUses != null && coupon.usedCount >= coupon.maxUses) {
       return res.status(400).json({ error: "Coupon usage limit reached" });
     }

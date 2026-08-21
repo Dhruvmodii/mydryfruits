@@ -7,17 +7,30 @@ import { prisma } from "../lib/prisma";
 import { requireAdmin, AuthRequest } from "../middleware/auth";
 import { validateBody } from "../middleware/validate";
 import { slugify, money, generateOrderNumber, estimateDelivery, stringifyAlternateNames } from "../lib/utils";
-import { uploadImageBuffer } from "../lib/cloudinary";
+import { uploadImageBuffer, uploadFaviconBuffer } from "../lib/cloudinary";
 import { buildInvoicePdf } from "../lib/pdf";
 import { sendTemplatedEmail } from "../lib/email";
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB — keep product images small on free EC2 disk
   fileFilter: (_req, file, cb) => {
     if (!file.mimetype.startsWith("image/")) {
       return cb(new Error("Only images allowed"));
     }
+    cb(null, true);
+  },
+});
+
+/** Browser tab icon — keep tiny so free-tier disk/bandwidth stay safe */
+const faviconUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 100 * 1024 }, // 100KB max
+  fileFilter: (_req, file, cb) => {
+    const ok = ["image/png", "image/x-icon", "image/vnd.microsoft.icon", "image/jpeg", "image/webp", "image/svg+xml"].includes(
+      file.mimetype
+    );
+    if (!ok) return cb(new Error("Use PNG, ICO, JPG, WebP, or SVG (max 100KB)"));
     cb(null, true);
   },
 });
@@ -458,15 +471,27 @@ router.get("/coupons", async (_req, res) => {
   });
 });
 
+function parseCouponDates(body: {
+  startsAt?: string | null;
+  expiresAt?: string | null;
+}) {
+  return {
+    startsAt: body.startsAt ? new Date(body.startsAt) : null,
+    expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
+  };
+}
+
 router.post("/coupons", async (req, res) => {
+  const dates = parseCouponDates(req.body);
   const coupon = await prisma.coupon.create({
     data: {
       code: String(req.body.code).toUpperCase(),
       type: req.body.type,
       value: req.body.value,
       minPurchase: req.body.minPurchase ?? 0,
-      maxUses: req.body.maxUses,
-      expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt) : null,
+      maxUses: req.body.maxUses === "" || req.body.maxUses == null ? null : Number(req.body.maxUses),
+      startsAt: dates.startsAt,
+      expiresAt: dates.expiresAt,
       active: req.body.active ?? true,
     },
   });
@@ -474,10 +499,17 @@ router.post("/coupons", async (req, res) => {
 });
 
 router.put("/coupons/:id", async (req, res) => {
-  const data = { ...req.body };
-  if (data.code) data.code = String(data.code).toUpperCase();
-  if (data.expiresAt) data.expiresAt = new Date(data.expiresAt);
-  delete data.id;
+  const dates = parseCouponDates(req.body);
+  const data: Record<string, unknown> = {
+    type: req.body.type,
+    value: req.body.value,
+    minPurchase: req.body.minPurchase ?? 0,
+    maxUses: req.body.maxUses === "" || req.body.maxUses == null ? null : Number(req.body.maxUses),
+    startsAt: dates.startsAt,
+    expiresAt: dates.expiresAt,
+    active: req.body.active ?? true,
+  };
+  if (req.body.code) data.code = String(req.body.code).toUpperCase();
   const coupon = await prisma.coupon.update({ where: { id: req.params.id }, data });
   res.json({ coupon });
 });
@@ -647,6 +679,47 @@ router.get("/settings", async (_req, res) => {
   await ensureIntegrationsSetting();
   const settings = await prisma.siteSetting.findMany();
   res.json({ settings: Object.fromEntries(settings.map((s) => [s.key, s.value])) });
+});
+
+/** Browser tab (favicon) — max 100KB, overwrites previous file */
+router.post("/branding/favicon", (req, res) => {
+  faviconUpload.single("file")(req, res, async (err) => {
+    if (err) {
+      const msg =
+        err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE"
+          ? "Favicon too large — max 100KB (use a small PNG/ICO)"
+          : err.message || "Upload failed";
+      return res.status(400).json({ error: msg });
+    }
+    try {
+      if (!req.file) return res.status(400).json({ error: "No file" });
+      const uploaded = await uploadFaviconBuffer(req.file.buffer, req.file.mimetype);
+      const existing = await prisma.siteSetting.findUnique({ where: { key: "branding" } });
+      const prev = (existing?.value as { faviconUrl?: string }) || {};
+      const value = { ...prev, faviconUrl: uploaded.url };
+      await prisma.siteSetting.upsert({
+        where: { key: "branding" },
+        create: { key: "branding", value },
+        update: { value },
+      });
+      res.status(201).json({ branding: value });
+    } catch (e) {
+      console.error("[favicon]", e);
+      res.status(500).json({ error: "Could not save favicon" });
+    }
+  });
+});
+
+router.delete("/branding/favicon", async (_req, res) => {
+  const existing = await prisma.siteSetting.findUnique({ where: { key: "branding" } });
+  const prev = (existing?.value as { faviconUrl?: string }) || {};
+  const value = { ...prev, faviconUrl: "" };
+  await prisma.siteSetting.upsert({
+    where: { key: "branding" },
+    create: { key: "branding", value },
+    update: { value },
+  });
+  res.json({ branding: value });
 });
 
 router.put("/settings/:key", async (req, res) => {

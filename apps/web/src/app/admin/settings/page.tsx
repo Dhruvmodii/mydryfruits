@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { adminFetch } from "../AdminShell";
+import { getApiBaseUrl } from "@/lib/constants";
 
 const emptyIntegrations = {
   sendgrid: { apiKey: "", fromEmail: "", fromName: "MyDryFruits" },
@@ -14,7 +15,10 @@ export default function AdminSettingsPage() {
   const [policies, setPolicies] = useState<any>({});
   const [social, setSocial] = useState<any>({});
   const [about, setAbout] = useState<any>({});
+  const [branding, setBranding] = useState<{ faviconUrl?: string }>({});
   const [integrations, setIntegrations] = useState<any>(emptyIntegrations);
+  const [faviconBusy, setFaviconBusy] = useState(false);
+  const [faviconMsg, setFaviconMsg] = useState("");
 
   useEffect(() => {
     adminFetch<{ settings: any }>("/api/admin/settings").then((d) => {
@@ -22,6 +26,7 @@ export default function AdminSettingsPage() {
       setPolicies(d.settings.policies || {});
       setSocial(d.settings.social || {});
       setAbout(d.settings.about || {});
+      setBranding(d.settings.branding || {});
       setIntegrations({
         ...emptyIntegrations,
         ...(d.settings.integrations || {}),
@@ -40,9 +45,83 @@ export default function AdminSettingsPage() {
     alert("Saved");
   }
 
+  async function uploadFavicon(file: File) {
+    setFaviconMsg("");
+    if (file.size > 100 * 1024) {
+      setFaviconMsg("File is over 100KB. Compress or use a smaller PNG/ICO.");
+      return;
+    }
+    setFaviconBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const token = localStorage.getItem("mydryfruits_admin_token");
+      const res = await fetch(`${getApiBaseUrl()}/api/admin/branding/favicon`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || "Upload failed");
+      setBranding(body.branding || {});
+      setFaviconMsg("Saved. Hard-refresh the site tab (Ctrl+F5) to see the new icon.");
+    } catch (e) {
+      setFaviconMsg(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setFaviconBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-8">
       <h1 className="font-display text-3xl text-forest">Settings</h1>
+
+      <section className="rounded-2xl bg-white p-5 shadow-card">
+        <h2 className="font-display text-xl text-forest">Browser tab icon</h2>
+        <p className="mt-1 text-sm text-forest/55">
+          This is the small logo in the browser title bar. Max <strong>100KB</strong> (PNG or ICO
+          recommended). Replacing overwrites the old file so disk stays small on free AWS.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-4">
+          {branding.faviconUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={branding.faviconUrl}
+              alt="Current favicon"
+              className="h-12 w-12 rounded-lg border border-forest/10 bg-cream object-contain p-1"
+            />
+          ) : (
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-forest text-sm font-bold text-gold">
+              M
+            </div>
+          )}
+          <input
+            type="file"
+            accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/jpeg,image/webp,image/svg+xml,.ico"
+            disabled={faviconBusy}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void uploadFavicon(file);
+            }}
+          />
+          {branding.faviconUrl ? (
+            <button
+              type="button"
+              className="text-sm text-red-700"
+              disabled={faviconBusy}
+              onClick={async () => {
+                await adminFetch("/api/admin/branding/favicon", { method: "DELETE" });
+                setBranding({ ...branding, faviconUrl: "" });
+                setFaviconMsg("Removed custom icon. Default “M” icon will show.");
+              }}
+            >
+              Remove custom icon
+            </button>
+          ) : null}
+        </div>
+        {faviconMsg ? <p className="mt-2 text-sm text-forest/70">{faviconMsg}</p> : null}
+      </section>
 
       <section className="rounded-2xl bg-white p-5 shadow-card">
         <h2 className="font-display text-xl text-forest">Business</h2>

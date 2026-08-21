@@ -79,6 +79,6 @@ export const env = {
     fromEmail: process.env.SENDGRID_FROM_EMAIL || "",
     fromName: process.env.SENDGRID_FROM_NAME || "MyDryFruits",
   },
-  adminEmail: process.env.ADMIN_EMAIL || "admin@mydryfruits.com",
+  adminEmail: process.env.ADMIN_EMAIL || "admin@dhruvmodi.online",
   trustProxy: process.env.TRUST_PROXY !== "false",
 };

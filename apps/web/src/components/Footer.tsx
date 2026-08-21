@@ -47,8 +47,7 @@ export function Footer({
         <div>
           <p className="mb-3 text-sm font-medium uppercase tracking-wider text-gold">Contact</p>
           <ul className="space-y-2 text-sm text-cream/80">
-            <li>hello@mydryfruits.com</li>
-            <li>+91 98765 43210</li>
+            <li>Contact via the form on this site</li>
           </ul>
           <div className="mt-6 flex gap-4 text-sm text-cream/70">
             <Link href="/privacy" className="hover:text-gold">Privacy</Link>

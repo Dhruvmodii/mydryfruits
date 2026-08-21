@@ -206,6 +206,7 @@ model Coupon {
   minPurchase    Decimal   @default(0)
   maxUses        Int?
   usedCount      Int       @default(0)
+  startsAt       DateTime?
   expiresAt      DateTime?
   active         Boolean   @default(true)
   createdAt      DateTime  @default(now())

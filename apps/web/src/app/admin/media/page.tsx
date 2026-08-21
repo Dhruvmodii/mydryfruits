@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { adminFetch } from "../AdminShell";
-import { API_URL } from "@/lib/constants";
+import { getApiBaseUrl } from "@/lib/constants";
 
 export default function AdminMediaPage() {
   const [items, setItems] = useState<any[]>([]);
@@ -17,6 +17,9 @@ export default function AdminMediaPage() {
   return (
     <div>
       <h1 className="font-display text-3xl text-forest">Media Library</h1>
+      <p className="mt-2 text-sm text-forest/55">
+        Max <strong>2MB</strong> per image (kept small for free AWS disk). Prefer compressed JPG/WebP.
+      </p>
       <input
         type="file"
         accept="image/*"
@@ -24,14 +27,24 @@ export default function AdminMediaPage() {
         onChange={async (e) => {
           const file = e.target.files?.[0];
           if (!file) return;
+          if (file.size > 2 * 1024 * 1024) {
+            alert("Image must be 2MB or smaller.");
+            e.target.value = "";
+            return;
+          }
           const fd = new FormData();
           fd.append("file", file);
           const token = localStorage.getItem("mydryfruits_admin_token");
-          await fetch(`${API_URL}/api/admin/media`, {
+          const res = await fetch(`${getApiBaseUrl()}/api/admin/media`, {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
             body: fd,
           });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            alert(body.error || "Upload failed");
+          }
+          e.target.value = "";
           load();
         }}
       />

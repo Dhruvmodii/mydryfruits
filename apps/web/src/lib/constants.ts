@@ -1,4 +1,29 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+/**
+ * Browser on localhost: call Express on NEXT_PUBLIC_API_URL (no Nginx proxy).
+ * Browser on real domain/IP: same-origin "" so /api goes through Nginx.
+ * Server/SSR: INTERNAL_API_URL or localhost API.
+ */
+export function getApiBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    const isLocal = host === "localhost" || host === "127.0.0.1";
+    if (isLocal) {
+      return (
+        process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://127.0.0.1:4000"
+      );
+    }
+    return "";
+  }
+  const internal = process.env.INTERNAL_API_URL?.replace(/\/$/, "");
+  if (internal) return internal;
+  const pub = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (pub) return pub;
+  return "http://127.0.0.1:4000";
+}
+
+/** Prefer getApiBaseUrl() in new code — this stays for existing imports */
+export const API_URL = getApiBaseUrl();
+
 export const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "MyDryFruits";
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 export const PAYMENTS_ENABLED = process.env.NEXT_PUBLIC_PAYMENTS_ENABLED === "true";

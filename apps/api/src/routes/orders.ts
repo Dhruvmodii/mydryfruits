@@ -148,14 +148,21 @@ router.post(
     const business = await prisma.siteSetting.findUnique({ where: { key: "business" } });
     const biz = (business?.value as { email?: string; phone?: string }) || {};
     const integrations = await getIntegrations();
+    // Skip seeded placeholders like hello@mydryfruits.com — use a real inbox only
+    const isPlaceholder = (e: string) =>
+      e.endsWith("@mydryfruits.com") || e.endsWith("@yourdomain.com");
     const adminRecipients = [
       ...new Set(
         [biz.email, integrations.sendgrid.fromEmail]
           .filter((e): e is string => !!e && e.includes("@"))
           .map((e) => e.toLowerCase())
+          .filter((e) => !isPlaceholder(e))
       ),
     ];
-    if (!adminRecipients.length) adminRecipients.push(env.adminEmail);
+    if (!adminRecipients.length) {
+      const fallback = (env.adminEmail || "").toLowerCase();
+      if (fallback.includes("@") && !isPlaceholder(fallback)) adminRecipients.push(fallback);
+    }
 
     const adminAlert = `New order ${order.orderNumber} — ${order.customerName} — ₹${Number(order.total).toFixed(2)}`;
 
@@ -340,14 +347,18 @@ async function buildQuote(
   let appliedCode: string | undefined;
 
   if (couponCode) {
+    const now = new Date();
     const coupon = await prisma.coupon.findFirst({
       where: {
         code: couponCode.toUpperCase(),
         active: true,
-        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        AND: [
+          { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
+          { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+        ],
       },
     });
-    if (!coupon) return { error: "Invalid coupon" };
+    if (!coupon) return { error: "Invalid or expired coupon" };
     if (coupon.maxUses != null && coupon.usedCount >= coupon.maxUses) {
       return { error: "Coupon usage limit reached" };
     }

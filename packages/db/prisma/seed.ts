@@ -125,7 +125,7 @@ async function main() {
   const passwordHash = await bcrypt.hash(process.env.ADMIN_PASSWORD || "Admin@12345", 10);
   await prisma.admin.create({
     data: {
-      email: process.env.ADMIN_EMAIL || "admin@mydryfruits.com",
+      email: process.env.ADMIN_EMAIL || "admin@dhruvmodi.online",
       passwordHash,
       name: "MyDryFruits Admin",
     },
@@ -405,8 +405,8 @@ async function main() {
         value: {
           name: "MyDryFruits",
           tagline: "Premium Dry Fruits Delivered Fresh",
-          email: "hello@mydryfruits.com",
-          phone: "+91 98765 43210",
+          email: process.env.ADMIN_EMAIL || "admin@dhruvmodi.online",
+          phone: "",
           address: "Family Dry Fruit Store, India",
           gst: "",
           yearsInBusiness: 25,
@@ -434,6 +434,10 @@ async function main() {
           title: "About MyDryFruits",
           body: "MyDryFruits is a family-owned dry fruits and healthy foods business. We source premium nuts, dried fruits and wholesome snacks — fresh stock, honest prices, and packaging that protects every order.",
         },
+      },
+      {
+        key: "branding",
+        value: { faviconUrl: "" },
       },
       {
         key: "integrations",

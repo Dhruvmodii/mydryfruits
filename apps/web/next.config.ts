@@ -32,13 +32,14 @@ const nextConfig: NextConfig = {
     ).replace(/\/$/, "");
     const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
     const sameOrigin = !publicApi || publicApi === siteUrl;
-
-    const apiDest = sameOrigin ? internalApi : publicApi;
+    // Local next dev has no Nginx — always proxy /api to Express
+    const shouldProxyApi = sameOrigin || process.env.NODE_ENV === "development";
+    const apiDest = shouldProxyApi ? internalApi : publicApi;
 
     return [
       { source: "/sitemap.xml", destination: `${apiDest}/sitemap.xml` },
       { source: "/robots.txt", destination: `${apiDest}/robots.txt` },
-      ...(sameOrigin
+      ...(shouldProxyApi
         ? [
             { source: "/api/:path*", destination: `${internalApi}/api/:path*` },
             { source: "/uploads/:path*", destination: `${internalApi}/uploads/:path*` },
