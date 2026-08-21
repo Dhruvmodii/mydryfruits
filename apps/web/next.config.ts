@@ -21,10 +21,30 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+    const publicApi = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000").replace(
+      /\/$/,
+      ""
+    );
+    const internalApi = (
+      process.env.INTERNAL_API_URL ||
+      publicApi ||
+      "http://127.0.0.1:4000"
+    ).replace(/\/$/, "");
+    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
+    const sameOrigin = !publicApi || publicApi === siteUrl;
+
+    const apiDest = sameOrigin ? internalApi : publicApi;
+
     return [
-      { source: "/sitemap.xml", destination: `${api}/sitemap.xml` },
-      { source: "/robots.txt", destination: `${api}/robots.txt` },
+      { source: "/sitemap.xml", destination: `${apiDest}/sitemap.xml` },
+      { source: "/robots.txt", destination: `${apiDest}/robots.txt` },
+      ...(sameOrigin
+        ? [
+            { source: "/api/:path*", destination: `${internalApi}/api/:path*` },
+            { source: "/uploads/:path*", destination: `${internalApi}/uploads/:path*` },
+            { source: "/health", destination: `${internalApi}/health` },
+          ]
+        : []),
     ];
   },
 };

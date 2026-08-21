@@ -134,7 +134,7 @@ cd /var/www/mydryfruits
 npm ci
 ```
 
-`postinstall` runs `prisma generate` automatically.
+`postinstall` is no longer used. Generate Prisma Client during build (`npm run generate -w @mydryfruits/db` / `npm run build:api`).
 
 ---
 

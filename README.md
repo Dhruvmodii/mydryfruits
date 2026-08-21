@@ -9,9 +9,11 @@ Premium dry fruits e-commerce platform — guest checkout storefront + full admi
 - **Integrations:** Cloudinary, Nodemailer, PDF invoices, Excel export
 - **Payments:** Razorpay stubbed (`PAYMENTS_ENABLED=false`)
 
-## Production (AWS EC2)
+## Production (free, no AWS)
 
-See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for full Ubuntu + Nginx + PM2 steps.
+See **[deploy/CLOUDFLARE_FREE.md](./deploy/CLOUDFLARE_FREE.md)** — Hostinger domain + Cloudflare Tunnel + this PC (₹0).
+
+Optional VPS/EC2 docs (not required): `DEPLOYMENT.md`, `deploy/AWS_FREE.md`.
 
 ```bash
 cp .env.example .env   # fill production values
