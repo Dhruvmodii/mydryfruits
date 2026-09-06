@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
 import { formatINR, formatWeight } from "@/lib/constants";
 
 type Order = {

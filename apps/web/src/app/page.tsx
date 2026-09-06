@@ -1,12 +1,11 @@
-import Image from "next/image";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { ProductCard } from "@/components/ProductCard";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import type { Product, Category } from "@/lib/types";
-import { HomeMotion } from "@/components/HomeMotion";
+import { HeroBanner } from "@/components/HeroBanner";
 
-export const revalidate = 60;
+export const revalidate = 10;
 
 async function getHome() {
   return api<{
@@ -39,40 +38,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="relative min-h-[88vh] overflow-hidden">
-        <div className="absolute inset-0">
-          {hero.imageUrl ? (
-            <Image
-              src={hero.imageUrl}
-              alt="Premium dry fruits"
-              fill
-              priority
-              className="object-cover"
-              sizes="100vw"
-            />
-          ) : (
-            <div className="h-full w-full bg-gradient-to-br from-forest via-forest-light to-cream" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-r from-forest-dark/85 via-forest-dark/55 to-forest-dark/25" />
-        </div>
-        <div className="container-pad relative flex min-h-[88vh] flex-col justify-end pb-16 pt-28 md:justify-center md:pb-24">
-          <HomeMotion>
-            <p className="font-display text-4xl text-cream sm:text-5xl md:text-7xl">MyDryFruits</p>
-            <h1 className="mt-4 max-w-2xl font-display text-3xl leading-tight text-cream sm:text-4xl md:text-5xl">
-              {hero.headline}
-            </h1>
-            <p className="mt-4 max-w-xl text-base text-cream/80 md:text-lg">{hero.subheading}</p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/shop" className="btn-primary !bg-cream !text-forest hover:!bg-gold">
-                Shop Now
-              </Link>
-              <Link href="/shop#categories" className="btn-secondary !border-cream/40 !bg-transparent !text-cream hover:!border-gold hover:!text-gold">
-                Explore Categories
-              </Link>
-            </div>
-          </HomeMotion>
-        </div>
-      </section>
+      <HeroBanner hero={hero} />
 
       <section className="section-space bg-cream">
         <div className="container-pad">

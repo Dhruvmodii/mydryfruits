@@ -28,9 +28,8 @@ export default function AdminSeoPage() {
         className="mt-6 space-y-3 rounded-2xl bg-white p-5 shadow-card"
         onSubmit={async (e) => {
           e.preventDefault();
-          await adminFetch("/api/admin/seo", { method: "PUT", body: JSON.stringify(form) });
+          await adminFetch("/api/admin/seo", { method: "PUT", body: JSON.stringify(form), success: "SEO settings saved successfully" });
           load();
-          alert("Saved");
         }}
       >
         <input className="input-field" placeholder="Path e.g. /shop" value={form.path} onChange={(e) => setForm({ ...form, path: e.target.value })} required />

@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
 
 const TOKEN_KEY = "mydryfruits_admin_token";
 

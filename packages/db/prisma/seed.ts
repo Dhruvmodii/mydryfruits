@@ -369,7 +369,17 @@ async function main() {
         key: "admin_order_notification",
         name: "Admin New Order",
         subject: "New order {{orderNumber}}",
-        htmlBody: `<div><h2>New Order {{orderNumber}}</h2><p>{{customerName}} · {{customerEmail}}</p><p>Total: ₹{{total}}</p><p>{{address}}</p></div>`,
+        htmlBody: `<div style="font-family:Georgia,serif;color:#1a2e1a">
+  <h2 style="color:#1B4332">New order {{orderNumber}}</h2>
+  <p><strong>{{customerName}}</strong> · {{customerEmail}}</p>
+  <p>{{address}}</p>
+  <h3>Items</h3>
+  {{itemsHtml}}
+  <p>Subtotal: ₹{{subtotal}}<br/>Discount: ₹{{discount}}<br/>Delivery: ₹{{deliveryCharge}}<br/><strong>Total: ₹{{total}}</strong></p>
+  {{viewOrderHtml}}
+  <p style="margin-top:16px;font-size:13px;color:#555">Copy this summary:</p>
+  <pre style="background:#f7f4ee;padding:12px;white-space:pre-wrap;font-size:12px">{{copySummary}}</pre>
+</div>`,
       },
       {
         key: "invoice",

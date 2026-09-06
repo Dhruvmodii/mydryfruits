@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { AnalyticsBeacon } from "@/components/AnalyticsBeacon";
+import { AppToasts } from "@/components/AppToasts";
 import { api } from "@/lib/api";
 import { SITE_NAME, SITE_URL } from "@/lib/constants";
 
@@ -74,6 +75,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <main>{children}</main>
         <Footer categories={data.categories} policies={data.settings?.policies as never} />
         <AnalyticsBeacon />
+        <AppToasts />
       </body>
     </html>
   );

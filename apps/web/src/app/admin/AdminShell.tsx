@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { friendlyError } from "@/lib/friendly-error";
+import { toast } from "@/components/Toast";
 import { getApiBaseUrl } from "@/lib/constants";
 
 const TOKEN_KEY = "mydryfruits_admin_token";
@@ -104,21 +106,37 @@ export function useAdminToken() {
   return token;
 }
 
-export async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+type AdminFetchOptions = RequestInit & { silent?: boolean; success?: string | false };
+
+const defaultSuccess: Record<string, string> = {
+  POST: "Added successfully",
+  PUT: "Updated successfully",
+  PATCH: "Updated successfully",
+  DELETE: "Deleted successfully",
+};
+
+export async function adminFetch<T>(path: string, options: AdminFetchOptions = {}): Promise<T> {
+  const { silent, success, headers, ...rest } = options;
   const token = localStorage.getItem(TOKEN_KEY) || "";
+  const method = (rest.method || "GET").toUpperCase();
   const res = await fetch(`${getApiBaseUrl()}${path}`, {
-    ...options,
+    ...rest,
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
-      ...(options.headers || {}),
+      ...(headers || {}),
     },
     credentials: "include",
     cache: "no-store",
   });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `Request failed (${res.status})`);
+    const body = await res.json().catch(() => ({} as { error?: string }));
+    const message = friendlyError(res.status, body.error);
+    if (!silent) toast.error(message);
+    throw new Error(message);
+  }
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method) && !silent && success !== false) {
+    toast.success(success || defaultSuccess[method] || "Saved successfully");
   }
   if (res.headers.get("content-type")?.includes("application/json")) {
     return res.json();

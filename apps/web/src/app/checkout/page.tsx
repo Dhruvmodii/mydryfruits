@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/store/cart";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
 import { formatINR } from "@/lib/constants";
 
 const CHECKOUT_KEY = "mydryfruits_checkout_details";
@@ -86,7 +86,7 @@ export default function CheckoutPage() {
             state: string;
             pincode: string;
           } | null;
-        }>(`/api/orders/saved-details?email=${encodeURIComponent(email)}`);
+        }>(`/api/orders/saved-details?email=${encodeURIComponent(email)}`, { silent: true });
 
         if (!res.details) return;
 
@@ -129,6 +129,7 @@ export default function CheckoutPage() {
       const res = await apiClient<{ discount: number }>("/api/coupons/validate", {
         method: "POST",
         body: JSON.stringify({ code: coupon, subtotal: cartTotal }),
+        success: "Coupon applied successfully",
       });
       setDiscount(res.discount);
       setError("");
@@ -170,6 +171,7 @@ export default function CheckoutPage() {
             quantity: i.quantity,
           })),
         }),
+        success: "Order placed successfully",
       });
       clear();
       router.push(`/order/${res.order.orderNumber}`);

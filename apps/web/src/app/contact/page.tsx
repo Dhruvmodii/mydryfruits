@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
 
 export default function ContactPage() {
   const [status, setStatus] = useState<"idle" | "ok" | "err">("idle");
@@ -17,6 +17,7 @@ export default function ContactPage() {
           email: fd.get("email"),
           message: fd.get("message"),
         }),
+        success: "Message sent successfully. We'll reply soon.",
       });
       setStatus("ok");
       e.currentTarget.reset();

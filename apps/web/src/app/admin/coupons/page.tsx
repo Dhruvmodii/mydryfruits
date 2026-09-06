@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { adminFetch } from "../AdminShell";
+import { toast } from "@/components/Toast";
 
 type CouponForm = {
   code: string;
@@ -85,14 +86,17 @@ export default function AdminCouponsPage() {
 
     if (!form.code.trim()) {
       setError("Coupon code is required.");
+      toast.error("Coupon code is required.");
       return;
     }
     if (form.value.trim() === "") {
       setError("Discount value is required.");
+      toast.error("Discount value is required. Type the percent or ₹ amount.");
       return;
     }
     if (form.minPurchase.trim() === "") {
       setError("Minimum purchase is required (use 0 for none).");
+      toast.error("Minimum purchase is required. Use 0 if there is no minimum.");
       return;
     }
 
@@ -100,14 +104,17 @@ export default function AdminCouponsPage() {
     const minPurchase = Number(form.minPurchase);
     if (Number.isNaN(value) || value < 0) {
       setError("Enter a valid discount value.");
+      toast.error("Enter a valid discount value (0 or more).");
       return;
     }
     if (form.type === "percentage" && value > 100) {
       setError("Percentage cannot be more than 100.");
+      toast.error("Percentage cannot be more than 100.");
       return;
     }
     if (Number.isNaN(minPurchase) || minPurchase < 0) {
       setError("Enter a valid minimum purchase.");
+      toast.error("Enter a valid minimum purchase (0 or more).");
       return;
     }
 
@@ -116,12 +123,14 @@ export default function AdminCouponsPage() {
       maxUses = Number(form.maxUses);
       if (Number.isNaN(maxUses) || maxUses < 1) {
         setError("Max uses must be at least 1, or leave blank for unlimited.");
+        toast.error("Max uses must be at least 1, or leave blank for unlimited.");
         return;
       }
     }
 
     if (form.startsAt && form.expiresAt && new Date(form.startsAt) >= new Date(form.expiresAt)) {
       setError("End date/time must be after the start date/time.");
+      toast.error("End date/time must be after the start date/time.");
       return;
     }
 
@@ -140,11 +149,13 @@ export default function AdminCouponsPage() {
       await adminFetch(`/api/admin/coupons/${editingId}`, {
         method: "PUT",
         body: JSON.stringify(payload),
+        success: "Coupon updated successfully",
       });
     } else {
       await adminFetch("/api/admin/coupons", {
         method: "POST",
         body: JSON.stringify(payload),
+        success: "Coupon created successfully",
       });
     }
     resetForm();

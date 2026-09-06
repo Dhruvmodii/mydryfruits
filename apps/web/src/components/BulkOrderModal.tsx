@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
 
 export function BulkOrderModal({
   open,
@@ -34,6 +34,7 @@ export function BulkOrderModal({
           productName,
           productId,
         }),
+        success: "Bulk inquiry sent. We'll email you shortly.",
       });
       setStatus("ok");
     } catch {

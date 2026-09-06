@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
 import { ProductCard } from "@/components/ProductCard";
 import { BulkOrderModal } from "@/components/BulkOrderModal";
 import { useCart } from "@/store/cart";
@@ -27,7 +27,8 @@ export default function ProductPage() {
 
   useEffect(() => {
     apiClient<{ product: Product; related: Product[]; frequentlyBought: Product[] }>(
-      `/api/products/${slug}`
+      `/api/products/${slug}`,
+      { silent: true }
     ).then(setData);
   }, [slug]);
 

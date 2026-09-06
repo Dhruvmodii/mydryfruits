@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
 
 type OffersData = {
   seasonal?: { banners?: { title: string; subtitle: string; href: string }[] };
@@ -13,7 +13,7 @@ export default function OffersPage() {
   const [data, setData] = useState<OffersData | null>(null);
 
   useEffect(() => {
-    apiClient<OffersData>("/api/storefront/offers").then(setData);
+    apiClient<OffersData>("/api/storefront/offers", { silent: true }).then(setData);
   }, []);
 
   return (

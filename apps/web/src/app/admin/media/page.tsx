@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminFetch } from "../AdminShell";
 import { getApiBaseUrl } from "@/lib/constants";
+import { toast } from "@/components/Toast";
 
 export default function AdminMediaPage() {
   const [items, setItems] = useState<any[]>([]);
@@ -28,7 +29,7 @@ export default function AdminMediaPage() {
           const file = e.target.files?.[0];
           if (!file) return;
           if (file.size > 2 * 1024 * 1024) {
-            alert("Image must be 2MB or smaller.");
+            toast.error("Image must be 2MB or smaller. Compress it and try again.");
             e.target.value = "";
             return;
           }
@@ -42,7 +43,9 @@ export default function AdminMediaPage() {
           });
           if (!res.ok) {
             const body = await res.json().catch(() => ({}));
-            alert(body.error || "Upload failed");
+            toast.error(body.error || "Upload failed. Use JPG/PNG under 2MB.");
+          } else {
+            toast.success("Image uploaded successfully");
           }
           e.target.value = "";
           load();

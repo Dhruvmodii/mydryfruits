@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
 
 export function NewsletterForm() {
   const [email, setEmail] = useState("");
@@ -13,6 +13,7 @@ export function NewsletterForm() {
       await apiClient("/api/storefront/newsletter", {
         method: "POST",
         body: JSON.stringify({ email }),
+        success: "You're on the list. Offers will come to this email.",
       });
       setStatus("ok");
       setEmail("");

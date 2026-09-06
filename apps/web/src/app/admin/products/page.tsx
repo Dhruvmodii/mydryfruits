@@ -50,9 +50,14 @@ export default function AdminProductsPage() {
       await adminFetch(`/api/admin/products/${editing.id}`, {
         method: "PUT",
         body: JSON.stringify(payload),
+        success: "Product updated successfully",
       });
     } else {
-      await adminFetch("/api/admin/products", { method: "POST", body: JSON.stringify(payload) });
+      await adminFetch("/api/admin/products", {
+        method: "POST",
+        body: JSON.stringify(payload),
+        success: "Product added successfully",
+      });
     }
     setEditing(null);
     setForm({

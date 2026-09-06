@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
 import { useCart } from "@/store/cart";
 import { formatINR, formatWeight } from "@/lib/constants";
 import type { Collection } from "@/lib/types";
@@ -16,7 +16,7 @@ export default function CollectionDetailPage() {
   const [added, setAdded] = useState(false);
 
   useEffect(() => {
-    apiClient<{ collection: Collection }>(`/api/collections/${params.slug}`).then((d) =>
+    apiClient<{ collection: Collection }>(`/api/collections/${params.slug}`, { silent: true }).then((d) =>
       setCollection(d.collection)
     );
   }, [params.slug]);

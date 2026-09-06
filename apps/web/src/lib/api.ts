@@ -1,46 +1,29 @@
 import { getApiBaseUrl } from "./constants";
 
-type FetchOptions = RequestInit & { token?: string };
+type FetchOptions = RequestInit & {
+  token?: string;
+};
 
+/** Server-safe fetch (no toast). Used by layouts / RSC. */
 export async function api<T>(path: string, options: FetchOptions = {}): Promise<T> {
+  const { token, ...rest } = options;
   const headers: HeadersInit = {
     "Content-Type": "application/json",
-    ...(options.headers || {}),
+    ...(rest.headers || {}),
   };
-  if (options.token) {
-    (headers as Record<string, string>)["Authorization"] = `Bearer ${options.token}`;
+  if (token) {
+    (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
   }
 
   const res = await fetch(`${getApiBaseUrl()}${path}`, {
-    ...options,
+    ...rest,
     headers,
     credentials: "include",
-    next: options.cache === "no-store" ? undefined : { revalidate: 60 },
+    next: rest.cache === "no-store" ? undefined : { revalidate: 60 },
   });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `Request failed (${res.status})`);
-  }
-  return res.json() as Promise<T>;
-}
-
-export async function apiClient<T>(path: string, options: FetchOptions = {}): Promise<T> {
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...(options.headers || {}),
-  };
-  if (options.token) {
-    (headers as Record<string, string>)["Authorization"] = `Bearer ${options.token}`;
-  }
-  const res = await fetch(`${getApiBaseUrl()}${path}`, {
-    ...options,
-    headers,
-    credentials: "include",
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
+    const body = await res.json().catch(() => ({} as { error?: string }));
     throw new Error(body.error || `Request failed (${res.status})`);
   }
   return res.json() as Promise<T>;

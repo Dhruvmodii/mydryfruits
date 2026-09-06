@@ -57,12 +57,8 @@ export default function AdminCategoriesPage() {
                 type="button"
                 className="text-sm text-red-700"
                 onClick={async () => {
-                  try {
-                    await adminFetch(`/api/admin/categories/${c.id}`, { method: "DELETE" });
+                    await adminFetch(`/api/admin/categories/${c.id}`, { method: "DELETE", success: "Category deleted" });
                     load();
-                  } catch (err) {
-                    alert(err instanceof Error ? err.message : "Failed");
-                  }
                 }}
               >
                 Delete

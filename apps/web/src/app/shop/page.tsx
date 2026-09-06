@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { apiClient } from "@/lib/api";
+import { apiClient } from "@/lib/api-client";
 import { ProductCard } from "@/components/ProductCard";
 import type { Product, Category } from "@/lib/types";
 
@@ -23,7 +23,7 @@ function ShopInner() {
   const discount = searchParams.get("discount") || "";
 
   useEffect(() => {
-    apiClient<{ items: Category[] }>("/api/categories").then((d) => setCategories(d.items));
+    apiClient<{ items: Category[] }>("/api/categories", { silent: true }).then((d) => setCategories(d.items));
   }, []);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ function ShopInner() {
     if (bestSeller) params.set("bestSeller", bestSeller);
     if (discount) params.set("discount", discount);
     params.set("limit", "48");
-    apiClient<{ items: Product[]; total: number }>(`/api/products?${params}`)
+    apiClient<{ items: Product[]; total: number }>(`/api/products?${params}`, { silent: true })
       .then((d) => {
         setProducts(d.items);
         setTotal(d.total);

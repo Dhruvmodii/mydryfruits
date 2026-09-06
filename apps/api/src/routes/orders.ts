@@ -144,6 +144,30 @@ router.post(
           `<li>${l.productName} (${l.weightGrams}g) × ${l.quantity} — ₹${l.lineTotal.toFixed(2)}</li>`
       )
       .join("");
+    const itemsText = quote.lines
+      .map((l) => `${l.productName} (${l.weightGrams}g) × ${l.quantity} — ₹${l.lineTotal.toFixed(2)}`)
+      .join("\n");
+    const address = [order.addressLine1, order.addressLine2, `${order.city}, ${order.state} ${order.pincode}`, order.country]
+      .filter(Boolean)
+      .join(", ");
+    const adminOrderUrl = `${env.siteUrl}/admin/orders?highlight=${encodeURIComponent(order.orderNumber)}`;
+    const copySummary = [
+      `Order ${order.orderNumber}`,
+      `Customer: ${order.customerName}`,
+      `Email: ${order.customerEmail}`,
+      `Address: ${address}`,
+      `Items:`,
+      itemsText,
+      `Subtotal: ₹${Number(order.subtotal).toFixed(2)}`,
+      `Discount: ₹${Number(order.discount).toFixed(2)}`,
+      `Delivery: ₹${Number(order.deliveryCharge).toFixed(2)}`,
+      `Tax: ₹${Number(order.tax).toFixed(2)}`,
+      `Total: ₹${Number(order.total).toFixed(2)}`,
+      order.couponCode ? `Coupon: ${order.couponCode}` : "",
+      `Open in admin: ${adminOrderUrl}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     const business = await prisma.siteSetting.findUnique({ where: { key: "business" } });
     const biz = (business?.value as { email?: string; phone?: string }) || {};
@@ -187,7 +211,23 @@ router.post(
           customerName: order.customerName,
           customerEmail: order.customerEmail,
           total: Number(order.total).toFixed(2),
-          address: `${order.addressLine1}, ${order.city}, ${order.state} ${order.pincode}`,
+          subtotal: Number(order.subtotal).toFixed(2),
+          discount: Number(order.discount).toFixed(2),
+          deliveryCharge: Number(order.deliveryCharge).toFixed(2),
+          tax: Number(order.tax).toFixed(2),
+          couponCode: order.couponCode || "",
+          address,
+          addressLine1: order.addressLine1,
+          city: order.city,
+          state: order.state,
+          pincode: order.pincode,
+          itemsHtml: `<ul>${itemsHtml}</ul>`,
+          itemsText,
+          copySummary,
+          adminOrderUrl,
+          viewOrderHtml: `<a href="${adminOrderUrl}" style="display:inline-block;margin-top:12px;padding:10px 16px;background:#1B4332;color:#fff;text-decoration:none;border-radius:8px">Open order in admin</a>`,
+          estimatedDelivery: estimatedDelivery,
+          notes: order.notes || "",
         },
       }),
       // Invoice + PDF to customer (also covers what the next-day cron used to do)

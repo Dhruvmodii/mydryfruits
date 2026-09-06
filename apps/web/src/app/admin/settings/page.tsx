@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminFetch } from "../AdminShell";
 import { getApiBaseUrl } from "@/lib/constants";
+import { toast } from "@/components/Toast";
 
 const emptyIntegrations = {
   sendgrid: { apiKey: "", fromEmail: "", fromName: "MyDryFruits" },
@@ -41,14 +42,16 @@ export default function AdminSettingsPage() {
     await adminFetch(`/api/admin/settings/${key}`, {
       method: "PUT",
       body: JSON.stringify({ value }),
+      success: "Settings saved successfully",
     });
-    alert("Saved");
   }
 
   async function uploadFavicon(file: File) {
     setFaviconMsg("");
     if (file.size > 100 * 1024) {
-      setFaviconMsg("File is over 100KB. Compress or use a smaller PNG/ICO.");
+      const msg = "File is over 100KB. Compress or use a smaller PNG/ICO.";
+      setFaviconMsg(msg);
+      toast.error(msg);
       return;
     }
     setFaviconBusy(true);
@@ -65,8 +68,11 @@ export default function AdminSettingsPage() {
       if (!res.ok) throw new Error(body.error || "Upload failed");
       setBranding(body.branding || {});
       setFaviconMsg("Saved. Hard-refresh the site tab (Ctrl+F5) to see the new icon.");
+      toast.success("Browser tab icon updated successfully");
     } catch (e) {
-      setFaviconMsg(e instanceof Error ? e.message : "Upload failed");
+      const msg = e instanceof Error ? e.message : "Upload failed";
+      setFaviconMsg(msg);
+      toast.error(msg);
     } finally {
       setFaviconBusy(false);
     }
