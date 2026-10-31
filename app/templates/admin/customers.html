@@ -1,0 +1,11 @@
+{% extends "admin/base.html" %}
+{% block title %}Customers{% endblock %}
+{% block admin %}
+<h1>Customers</h1>
+<table>
+  <tr><th>Name</th><th>Email</th><th>Orders</th><th>Spent</th></tr>
+  {% for c in items %}
+  <tr><td>{{ c.name }}</td><td>{{ c.email }}</td><td>{{ c.orderCount }}</td><td>{{ format_inr(c.totalSpent) }}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

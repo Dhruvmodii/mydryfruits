@@ -1,0 +1,119 @@
+{% extends "admin/base.html" %}
+{% block title %}Order tracking settings{% endblock %}
+{% block admin %}
+<h1>Order tracking</h1>
+<p class="muted">Choose how orders move from "placed" to "delivered", the delivery time customers see, and how the progress bar looks. Changes apply to all orders right away. You can still change any single order by hand under <a class="link" href="{{ url_for('admin.orders') }}">Orders → Manage</a>.</p>
+
+<form method="post" class="admin-cols" id="tracking-form">
+  <div class="stack">
+    <div class="panel stack">
+      <h2 style="font-size:1.1rem;margin:0">1. Automatic status updates</h2>
+      <label class="checkbox"><input type="checkbox" name="autoAdvance" {% if s.autoAdvance %}checked{% endif %}> Move orders to the next step automatically</label>
+      <small class="muted">For each step, enter how many <strong>hours after the previous step</strong> it should happen. Enter <strong>0</strong> to do that step by hand only (recommended for "Delivered").</small>
+      {% for st in statuses %}
+      {% set step = s.steps[st] %}
+      <div style="border:1px solid var(--line);border-radius:12px;padding:.85rem" class="stack">
+        <div class="row between">
+          <strong>Step {{ loop.index }}</strong>
+          {% if st == 'PENDING' %}
+            <span class="muted small">Starts when the order is placed</span>
+          {% else %}
+            <label class="row small" style="gap:.4rem;flex-wrap:nowrap">
+              <input class="input" type="number" min="0" step="0.5" name="steps.{{ st }}.afterHours" value="{{ step.afterHours | float | round(1) | replace('.0', '') }}" style="width:88px;min-height:40px" aria-label="Hours after previous step for {{ step.label }}">
+              hours after step {{ loop.index - 1 }}
+            </label>
+          {% endif %}
+        </div>
+        <div class="fields-2">
+          <div class="field"><label>Name shown to customer</label><input class="input js-label" data-step="{{ loop.index0 }}" name="steps.{{ st }}.label" value="{{ step.label }}"></div>
+          <div class="field"><label>Short description</label><input class="input js-desc" data-step="{{ loop.index0 }}" name="steps.{{ st }}.description" value="{{ step.description }}"></div>
+        </div>
+      </div>
+      {% endfor %}
+      <label class="checkbox"><input type="checkbox" name="notifyCustomer" {% if s.notifyCustomer %}checked{% endif %}> Email the customer when you change the status by hand <span class="muted small">(edit the email in Email Builder → "Order Status Update")</span></label>
+    </div>
+
+    <div class="panel stack">
+      <h2 style="font-size:1.1rem;margin:0">2. Delivery time shown to customers</h2>
+      <div class="fields-2">
+        <div class="field"><label>Earliest delivery: days after order</label><input class="input" type="number" min="0" name="delivery.minDays" value="{{ s.delivery.minDays }}"></div>
+        <div class="field"><label>Latest delivery: days after order</label><input class="input" type="number" min="0" name="delivery.maxDays" value="{{ s.delivery.maxDays }}"></div>
+      </div>
+      <div class="fields-2">
+        <div class="field"><label>Delivery hours start</label><input class="input" type="time" name="delivery.windowStart" value="{{ s.delivery.windowStart }}"></div>
+        <div class="field"><label>Delivery hours end</label><input class="input" type="time" name="delivery.windowEnd" value="{{ s.delivery.windowEnd }}"></div>
+      </div>
+      <label class="checkbox"><input type="checkbox" name="delivery.skipSundays" {% if s.delivery.skipSundays %}checked{% endif %}> No deliveries on Sunday</label>
+      <div class="field">
+        <label>If an order is late, push the new expected time by (hours)</label>
+        <input class="input" type="number" min="1" name="delivery.lateExtendHours" value="{{ s.delivery.lateExtendHours | float | round(0) | int }}" style="max-width:160px">
+        <span class="hint">An order placed now would show: <strong>{{ sample_window }}</strong></span>
+      </div>
+    </div>
+
+    <div class="panel stack">
+      <h2 style="font-size:1.1rem;margin:0">3. Messages for on-time, early and late orders</h2>
+      {% for key, label in [("onTime", "On schedule"), ("early", "May arrive early (shipped before the window)"), ("late", "Running late (past the latest time)"), ("delivered", "Delivered"), ("deliveredEarly", "Delivered early"), ("cancelled", "Cancelled")] %}
+      <div class="field"><label>{{ label }}</label><input class="input" name="messages.{{ key }}" value="{{ s.messages[key] }}"></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="panel stack" style="position:sticky;top:1rem">
+      <h2 style="font-size:1.1rem;margin:0">4. Progress bar look</h2>
+      <div class="color-row">
+        <label>Done steps<input type="color" name="style.activeColor" value="{{ s.style.activeColor }}" class="js-color" data-var="--t-active"></label>
+        <label>Current step<input type="color" name="style.accentColor" value="{{ s.style.accentColor }}" class="js-color" data-var="--t-accent"></label>
+        <label>Upcoming steps<input type="color" name="style.inactiveColor" value="{{ s.style.inactiveColor }}" class="js-color" data-var="--t-inactive"></label>
+      </div>
+      <label class="checkbox"><input type="checkbox" class="js-toggle" data-target="time" name="style.showTimes" {% if s.style.showTimes %}checked{% endif %}> Show the date &amp; time of each step</label>
+      <label class="checkbox"><input type="checkbox" class="js-toggle" data-target="p" name="style.showDescriptions" {% if s.style.showDescriptions %}checked{% endif %}> Show the short description</label>
+
+      <p class="small muted" style="margin:0">Live preview (an order that is "Packed"):</p>
+      <div class="track" id="preview" style="--t-active: {{ s.style.activeColor }}; --t-inactive: {{ s.style.inactiveColor }}; --t-accent: {{ s.style.accentColor }};border:1px dashed var(--line);border-radius:12px;padding:1rem">
+        <ol class="track-steps">
+          {% for st in statuses %}
+          <li class="track-step {{ 'done' if loop.index0 < 2 }} {{ 'current' if loop.index0 == 2 }}">
+            <span class="track-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+            <div>
+              <h3 data-label="{{ loop.index0 }}">{{ s.steps[st].label }}</h3>
+              {% if loop.index0 <= 2 %}
+              <p data-desc="{{ loop.index0 }}" {% if not s.style.showDescriptions %}hidden{% endif %}>{{ s.steps[st].description }}</p>
+              <time {% if not s.style.showTimes %}hidden{% endif %}>Mon, 2 Nov, {{ 10 + loop.index0 * 3 }}:00</time>
+              {% endif %}
+            </div>
+          </li>
+          {% endfor %}
+        </ol>
+      </div>
+      <button class="btn btn-block" type="submit">Save tracking settings</button>
+    </div>
+  </div>
+</form>
+<script>
+(function () {
+  var preview = document.getElementById("preview");
+  document.querySelectorAll(".js-color").forEach(function (input) {
+    input.addEventListener("input", function () { preview.style.setProperty(input.dataset.var, input.value); });
+  });
+  document.querySelectorAll(".js-label").forEach(function (input) {
+    input.addEventListener("input", function () {
+      var el = preview.querySelector('[data-label="' + input.dataset.step + '"]');
+      if (el) el.textContent = input.value;
+    });
+  });
+  document.querySelectorAll(".js-desc").forEach(function (input) {
+    input.addEventListener("input", function () {
+      var el = preview.querySelector('[data-desc="' + input.dataset.step + '"]');
+      if (el) el.textContent = input.value;
+    });
+  });
+  document.querySelectorAll(".js-toggle").forEach(function (box) {
+    box.addEventListener("change", function () {
+      preview.querySelectorAll(box.dataset.target).forEach(function (el) { el.hidden = !box.checked; });
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "admin/base.html" %}
+{% block title %}Homepage{% endblock %}
+{% block admin %}
+<h1>Homepage hero JSON</h1>
+<form method="post">
+  <textarea class="input" name="content" rows="18" style="font-family:monospace">{{ content }}</textarea>
+  <p><button class="btn" type="submit">Save</button></p>
+</form>
+{% endblock %}

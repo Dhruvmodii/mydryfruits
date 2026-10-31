@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}My orders | {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:1.25rem">
+  <div class="container" style="max-width:880px">
+    <h1>My orders</h1>
+
+    {% if customer %}
+    <div class="panel row between" style="margin-bottom:1rem">
+      <div>
+        <strong>{{ customer.name }}</strong>
+        <div class="muted small">{{ customer.phone or '' }}{% if customer.phone %} · {% endif %}{{ customer.email }}</div>
+        {% if customer.addressLine1 %}<div class="muted small">{{ customer.addressLine1 }}, {{ customer.city }} {{ customer.pincode }}</div>{% endif %}
+      </div>
+      <div class="row">
+        <a class="btn-secondary btn-sm" href="{{ url_for('store.my_details') }}">{{ icon("edit") }} Edit my details</a>
+        <form method="post" action="{{ url_for('store.forget_me') }}" onsubmit="return confirm('Remove your saved details from this device? Your orders stay safe.')">
+          <button class="btn-ghost btn-sm" type="submit">Not you?</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if lookup_email %}
+    <div class="note-box row between" style="margin-bottom:1rem">
+      <span>{{ icon("info") }} Showing orders for <strong>{{ lookup_email | mask_email }}</strong>. For privacy, phone numbers and full addresses are hidden.</span>
+      <form method="post" action="{{ url_for('store.clear_lookup') }}"><button class="btn-ghost btn-sm" type="submit">Use another email</button></form>
+    </div>
+    {% endif %}
+
+    {% if orders %}
+    <p class="muted">Tap <strong>Order again</strong> to put the same items in your cart — you can change weights or quantities before paying. Tap <strong>Invoice</strong> to download or print a bill.</p>
+    <div class="stack">
+      {% for o in orders %}
+      {% set t = views[o.id] %}
+      <article class="order-card">
+        <div class="order-head">
+          <div>
+            <strong>{{ o.createdAt | ist_day }}</strong>
+            <div class="muted small">{{ o.items|length }} item{{ '' if o.items|length == 1 else 's' }} · {{ format_inr(o.total) }} · #{{ o.orderNumber }}</div>
+          </div>
+          <span class="pill {{ o.status }}">{{ t.statusLabel }}</span>
+        </div>
+        <div class="thumbs">
+          {% for i in o.items[:4] %}<img src="{{ i.imageUrl or 'https://placehold.co/100x100/efe9df/1b4332?text=MDF' }}" alt="{{ i.productName }}" title="{{ i.productName }}">{% endfor %}
+          {% if o.items|length > 4 %}<span>+{{ o.items|length - 4 }} more</span>{% endif %}
+        </div>
+        <p class="small" style="margin:0">{{ o.items | map(attribute='productName') | join(', ') }}</p>
+        {% set compact = True %}
+        {% include "_progress.html" %}
+        <div class="order-actions">
+          <a class="btn btn-sm" href="{{ url_for('store.track_order', order_number=o.orderNumber) }}">{{ icon("truck") }} Track</a>
+          <form method="post" action="{{ url_for('store.reorder', order_number=o.orderNumber) }}">
+            <button class="btn-secondary btn-sm" type="submit">{{ icon("repeat") }} Order again</button>
+          </form>
+          <a class="btn-secondary btn-sm" href="{{ url_for('store.invoice', order_number=o.orderNumber) }}">{{ icon("orders") }} Invoice</a>
+          <a class="btn-ghost btn-sm" href="{{ url_for('store.order', order_number=o.orderNumber) }}">View details</a>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% elif customer %}
+    <div class="panel empty">
+      {{ icon("orders") }}
+      <h2>No orders yet</h2>
+      <p class="muted">When you place an order it will show up here.</p>
+      <a class="btn" href="{{ url_for('store.shop') }}">Start shopping</a>
+    </div>
+    {% else %}
+    <div class="panel" style="margin-bottom:1rem">
+      <h2 style="font-size:1.2rem">See your past orders</h2>
+      <p class="muted" style="margin:0">No account needed. Orders placed on this phone show here automatically. Ordered from another phone or computer? Just type your email below.</p>
+    </div>
+    {% include "_find_orders.html" %}
+    {% endif %}
+
+    {% if orders %}
+    <details class="panel" style="margin-top:1rem">
+      <summary style="cursor:pointer;font-weight:600;color:var(--forest)">Ordered with another email? Show those orders too</summary>
+      <div style="margin-top:.75rem">{% include "_find_orders.html" %}</div>
+    </details>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

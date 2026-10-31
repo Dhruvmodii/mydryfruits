@@ -1,0 +1,129 @@
+{% extends "admin/base.html" %}
+{% block title %}Order {{ order.orderNumber }}{% endblock %}
+{% block admin %}
+<a class="link small" href="{{ url_for('admin.orders') }}">← All orders</a>
+<div class="row between" style="margin:.5rem 0 1rem">
+  <div>
+    <h1 style="margin:0">Order {{ order.orderNumber }}</h1>
+    <div class="muted small">Placed {{ order.createdAt | ist_full }} · {{ format_inr(order.total) }}</div>
+  </div>
+  <div class="row">
+    <span class="pill {{ order.status }}">{{ t.statusLabel }}</span>
+    <a class="btn-secondary btn-sm" href="{{ url_for('store.invoice', order_number=order.orderNumber) }}" target="_blank" rel="noopener">Invoice / print</a>
+  </div>
+</div>
+
+<div class="admin-cols">
+  <div class="stack">
+    <div class="panel">
+      <h2 style="font-size:1.1rem">What the customer sees</h2>
+      <div class="eta {{ t.state }}" style="margin-bottom:1rem;box-shadow:none;border:1px solid var(--line);border-left-width:4px">
+        {% if t.expected %}<div class="when" style="font-size:1.05rem">{{ t.expected }}</div>{% endif %}
+        {% if order.status == 'DELIVERED' and t.deliveredAt %}<div class="when" style="font-size:1.05rem">Delivered {{ t.deliveredAt }}</div>{% endif %}
+        <p class="small" style="margin:0">{{ t.message }}</p>
+      </div>
+      {% include "_progress.html" %}
+      <p class="small muted" style="margin:.75rem 0 0">
+        {% if t.nextAuto %}Next automatic update: <strong>{{ t.nextAuto.label }}</strong> at {{ t.nextAuto.at }}.
+        {% elif order.status in ('DELIVERED', 'CANCELLED') %}This order is finished — no more automatic updates.
+        {% elif not tracking.autoUpdate %}Automatic updates are <strong>off</strong> for this order. Change the status manually.
+        {% else %}The next step is manual. Set it below when it happens.{% endif %}
+        <a class="link" href="{{ url_for('store.track_order', order_number=order.orderNumber) }}" target="_blank" rel="noopener">Open customer page ↗</a>
+      </p>
+    </div>
+
+    <form method="post" class="panel stack">
+      <input type="hidden" name="action" value="status">
+      <h2 style="font-size:1.1rem;margin:0">Change status now</h2>
+      <div class="fields-2">
+        <div class="field">
+          <label for="status">New status</label>
+          <select class="input" id="status" name="status">
+            {% for s in statuses %}<option value="{{ s }}" {% if order.status == s %}selected{% endif %}>{{ labels[s] }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="note">Internal note (optional)</label>
+          <input class="input" id="note" name="note" placeholder="e.g. Packed by Ravi">
+        </div>
+      </div>
+      <button class="btn" type="submit">Update status</button>
+      <small class="muted">Automatic updates continue from the new status{% if settings.notifyCustomer %}, and the customer gets an email{% endif %}.</small>
+    </form>
+
+    <form method="post" class="panel stack">
+      <input type="hidden" name="action" value="tracking">
+      <h2 style="font-size:1.1rem;margin:0">Delivery time &amp; courier</h2>
+      <label class="checkbox"><input type="checkbox" name="autoUpdate" {% if tracking.autoUpdate %}checked{% endif %}> Update this order's status automatically</label>
+      <div class="fields-2">
+        <div class="field">
+          <label for="estimatedFrom">Earliest delivery (India time)</label>
+          <input class="input" type="datetime-local" id="estimatedFrom" name="estimatedFrom" value="{{ est_from }}">
+        </div>
+        <div class="field">
+          <label for="estimatedTo">Latest delivery (India time)</label>
+          <input class="input" type="datetime-local" id="estimatedTo" name="estimatedTo" value="{{ est_to }}">
+        </div>
+      </div>
+      <label class="checkbox"><input type="checkbox" name="resetWindow"> Reset to the default window from tracking settings</label>
+      <small class="muted">If the latest time passes before delivery, the customer automatically sees a "running late" message with a new time.</small>
+      <div class="fields-2">
+        <div class="field">
+          <label for="courierName">Courier name (optional)</label>
+          <input class="input" id="courierName" name="courierName" value="{{ tracking.courierName or '' }}" placeholder="e.g. Delhivery, own delivery">
+        </div>
+        <div class="field">
+          <label for="trackingUrl">Courier tracking link (optional)</label>
+          <input class="input" id="trackingUrl" name="trackingUrl" type="url" value="{{ tracking.trackingUrl or '' }}" placeholder="https://…">
+        </div>
+      </div>
+      <div class="field">
+        <label for="customerNote">Message to the customer (optional)</label>
+        <textarea class="input" id="customerNote" name="customerNote" placeholder="e.g. Your parcel will reach you by evening.">{{ tracking.customerNote or '' }}</textarea>
+      </div>
+      <button class="btn" type="submit">Save delivery details</button>
+    </form>
+  </div>
+
+  <div class="stack">
+    <div class="panel">
+      <h2 style="font-size:1.1rem">Customer</h2>
+      <dl class="kv">
+        <dt>Name</dt><dd>{{ order.customerName }}</dd>
+        {% if order.customer and order.customer.phone %}<dt>Phone</dt><dd><a class="link" href="tel:{{ order.customer.phone }}">{{ order.customer.phone }}</a></dd>{% endif %}
+        <dt>Email</dt><dd><a class="link" href="mailto:{{ order.customerEmail }}">{{ order.customerEmail }}</a></dd>
+        <dt>Address</dt><dd>{{ order.addressLine1 }}{% if order.addressLine2 %}, {{ order.addressLine2 }}{% endif %}, {{ order.city }}, {{ order.state }} {{ order.pincode }}</dd>
+        {% if order.notes %}<dt>Instructions</dt><dd>{{ order.notes }}</dd>{% endif %}
+      </dl>
+    </div>
+    <div class="panel">
+      <h2 style="font-size:1.1rem">Items</h2>
+      <div class="mini-items">
+        {% for i in order.items %}
+        <div class="mini-item">
+          <img src="{{ i.imageUrl or 'https://placehold.co/100x100/efe9df/1b4332?text=MDF' }}" alt="">
+          <span>{{ i.productName }}<br><span class="muted small">{{ format_weight(i.weightGrams) }} × {{ i.quantity }}</span></span>
+          <strong>{{ format_inr(i.lineTotal) }}</strong>
+        </div>
+        {% endfor %}
+      </div>
+      <div style="margin-top:.5rem">
+        <div class="summary-row"><span>Subtotal</span><span>{{ format_inr(order.subtotal) }}</span></div>
+        {% if order.discount|float %}<div class="summary-row"><span>Discount {{ order.couponCode or '' }}</span><span>− {{ format_inr(order.discount) }}</span></div>{% endif %}
+        <div class="summary-row total"><span>Total</span><span>{{ format_inr(order.total) }}</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2 style="font-size:1.1rem">History</h2>
+      <ul class="timeline">
+        {% for e in t.events | reverse %}
+        <li>
+          <span class="pill {{ e.status }}">{{ labels.get(e.status, e.status) }}</span>
+          <span>{{ e.createdAt | ist_full }}<br><span class="src">{{ {'auto': 'Automatic', 'admin': 'By admin', 'system': 'Order placed'}.get(e.source, e.source) }}</span>{% if e.note %} · {{ e.note }}{% endif %}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

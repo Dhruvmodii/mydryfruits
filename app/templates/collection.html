@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ collection.name }}{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container">
+    <h1>{{ collection.name }}</h1>
+    <p class="muted">{{ collection.description }}</p>
+    <div class="grid cards-3" style="margin-top:1.5rem">
+      {% for item in collection.items %}
+        {% set p = item.product %}
+        {% if p %}{% include "_product_card.html" %}{% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "admin/base.html" %}
+{% block title %}Email templates{% endblock %}
+{% block admin %}
+<h1>Email templates</h1>
+<p class="muted">Edit the subject and HTML on the left. The right side shows how the email will look in the customer's inbox, using sample order data. Placeholders like <code>{{ '{{customerName}}' }}</code> are filled in automatically when a real email is sent.</p>
+{% if not sendgrid_ready %}
+<div class="flash error">{{ email_provider }} is not set up yet, so emails will not be sent. Add your keys in <a href="{{ url_for('admin.settings') }}#integrations"><strong>Settings → Mail &amp; WhatsApp</strong></a>.</div>
+{% endif %}
+
+{% for t in items %}
+<details class="card email-tpl" {% if loop.first %}open{% endif %} style="margin:1rem 0">
+  <summary><strong>{{ t.name }}</strong> <span class="muted">({{ t.key }})</span></summary>
+  <div class="email-editor">
+    <div class="email-fields">
+      <form method="post" class="grid" style="gap:.5rem">
+        <input type="hidden" name="key" value="{{ t.key }}">
+        <label class="muted">Subject</label>
+        <input class="input js-subject" name="subject" value="{{ t.subject }}">
+        <label class="muted">HTML body</label>
+        <textarea class="input js-body" name="htmlBody" rows="18" style="font-family:monospace;font-size:.82rem">{{ t.htmlBody }}</textarea>
+        <button class="btn" type="submit">Save template</button>
+      </form>
+      <form method="post" action="{{ url_for('admin.email_test') }}" class="js-test" style="display:flex;gap:.5rem;margin-top:.75rem">
+        <input type="hidden" name="subject">
+        <input type="hidden" name="htmlBody">
+        <input class="input" type="email" name="to" required placeholder="Send a test to your email">
+        <button class="btn-secondary" type="submit">Send test</button>
+      </form>
+    </div>
+    <div class="email-preview">
+      <div class="preview-toolbar">
+        <strong>Inbox preview</strong>
+        <div class="preview-modes">
+          <button type="button" class="js-mode active" data-width="100%">Desktop</button>
+          <button type="button" class="js-mode" data-width="375px">Mobile</button>
+        </div>
+      </div>
+      <div class="mail-head">
+        <div class="mail-avatar">{{ from_name[:1] }}</div>
+        <div>
+          <div><strong>{{ from_name }}</strong> <span class="muted">&lt;{{ from_email }}&gt;</span></div>
+          <div class="muted">to {{ sample.customerEmail }}</div>
+        </div>
+      </div>
+      <div class="mail-subject js-preview-subject"></div>
+      <div class="mail-frame-wrap">
+        <iframe class="mail-frame js-frame" title="Email preview" sandbox="allow-same-origin"></iframe>
+      </div>
+    </div>
+  </div>
+</details>
+{% endfor %}
+
+<script>
+(function () {
+  var sample = {{ sample|tojson }};
+  function fill(text) {
+    return (text || "").replace(/\{\{\s*(\w+)\s*\}\}/g, function (_, k) {
+      return sample[k] != null ? sample[k] : "";
+    });
+  }
+  function wrap(html) {
+    if (/<html[\s>]/i.test(html)) return html;
+    return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<style>body{margin:0;padding:16px;font-family:Arial,Helvetica,sans-serif;color:#1f2933;line-height:1.5}img{max-width:100%}</style>' +
+      '</head><body>' + html + '</body></html>';
+  }
+  document.querySelectorAll(".email-tpl").forEach(function (card) {
+    var subject = card.querySelector(".js-subject");
+    var body = card.querySelector(".js-body");
+    var frame = card.querySelector(".js-frame");
+    var subjectOut = card.querySelector(".js-preview-subject");
+    var timer;
+    function render() {
+      subjectOut.textContent = fill(subject.value);
+      frame.srcdoc = wrap(fill(body.value));
+    }
+    function later() { clearTimeout(timer); timer = setTimeout(render, 250); }
+    subject.addEventListener("input", later);
+    body.addEventListener("input", later);
+    frame.addEventListener("load", function () {
+      try {
+        var h = frame.contentDocument.documentElement.scrollHeight;
+        frame.style.height = Math.min(Math.max(h + 10, 320), 1400) + "px";
+      } catch (e) {}
+    });
+    card.querySelectorAll(".js-mode").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        card.querySelectorAll(".js-mode").forEach(function (b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+        frame.style.width = btn.dataset.width;
+        setTimeout(function () { frame.dispatchEvent(new Event("load")); }, 50);
+      });
+    });
+    card.querySelector(".js-test").addEventListener("submit", function (e) {
+      e.target.subject.value = subject.value;
+      e.target.htmlBody.value = body.value;
+    });
+    render();
+  });
+})();
+</script>
+{% endblock %}

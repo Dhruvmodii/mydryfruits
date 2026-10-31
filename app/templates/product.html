@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ product.name }} | {{ site_name }}{% endblock %}
+{% block description %}Buy {{ product.name }}{% if product.description %} ({{ product.description }}){% endif %} online. Fresh stock, choose your weight from 250g.{% endblock %}
+{% block content %}
+{% set unavailable = (not product.inStock) or product.onDemand %}
+{% set per_kg = product.pricePerKg | float %}
+{% set disc = product.discountPercent or 0 %}
+<section class="section" style="padding-top:1rem">
+  <div class="container">
+    <nav class="small muted" style="margin-bottom:.75rem"><a href="{{ url_for('store.shop') }}">Shop</a>{% if product.category %} / <a href="{{ url_for('store.shop', category=product.category.slug) }}">{{ product.category.name }}</a>{% endif %}</nav>
+    <div class="product-layout">
+      <div class="product-media">
+        <img src="{{ product.imageUrl or 'https://placehold.co/600x600/efe9df/1b4332?text=MyDryFruits' }}" alt="{{ product.name }}">
+      </div>
+      <div class="stack">
+        <div>
+          <div class="row" style="gap:.4rem;margin-bottom:.4rem">
+            {% if product.isBestSeller %}<span class="badge">Bestseller</span>{% endif %}
+            {% if product.isPremium %}<span class="badge soft">Premium</span>{% endif %}
+            {% if disc %}<span class="badge red">{{ disc }}% off</span>{% endif %}
+          </div>
+          <h1 style="margin-bottom:.2rem">{{ product.name }}</h1>
+          {% if product.description and product.description|lower != product.name|lower %}<p class="muted" style="margin:0">Also called: {{ product.description }}</p>{% endif %}
+        </div>
+
+        {% if unavailable %}
+        <div class="panel">
+          <h2 style="font-size:1.2rem">Out of stock right now</h2>
+          <p class="muted">This item is available on request. Send us a message below with the quantity you need and we will reply with the price.</p>
+          <a class="btn" href="#bulk">Ask for price</a>
+        </div>
+        {% else %}
+        <form method="post" action="{{ url_for('store.cart_add') }}" class="panel stack" id="buy" data-per-kg="{{ per_kg }}" data-discount="{{ disc }}">
+          <input type="hidden" name="productId" value="{{ product.id }}">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <div>
+            <span class="big-price" data-price>{{ format_inr(per_kg * 0.5 * (1 - disc / 100)) }}</span>
+            {% if disc %}<s class="muted" data-old>{{ format_inr(per_kg * 0.5) }}</s>{% endif %}
+            <p class="muted small" style="margin:0">{{ format_inr(per_kg * (1 - disc / 100)) }} per kg · price for the weight you pick</p>
+          </div>
+          <fieldset style="border:0;padding:0;margin:0">
+            <legend class="small" style="font-weight:600;color:var(--forest);margin-bottom:.4rem">1. Choose weight</legend>
+            <div class="weight-options">
+              {% for w in weights %}
+              <label><input type="radio" name="weightGrams" value="{{ w }}" {% if w == 500 %}checked{% endif %}><span>{{ format_weight(w) }}</span></label>
+              {% endfor %}
+            </div>
+          </fieldset>
+          <div>
+            <p class="small" style="font-weight:600;color:var(--forest);margin-bottom:.4rem">2. How many packs?</p>
+            <div class="qty">
+              <button type="button" data-qty="-1" aria-label="One less">−</button>
+              <input type="number" name="quantity" value="1" min="1" max="20" inputmode="numeric" aria-label="Quantity">
+              <button type="button" data-qty="1" aria-label="One more">+</button>
+            </div>
+          </div>
+          <div class="sticky-buy">
+            <button class="btn btn-block" type="submit">{{ icon("cart") }} Add to cart · <span data-total>{{ format_inr(per_kg * 0.5 * (1 - disc / 100)) }}</span></button>
+          </div>
+          <p class="muted small" style="margin:0">{{ icon("truck", "icon") }} You can track this order step by step after you buy.</p>
+        </form>
+        {% endif %}
+
+        <div class="info-list">
+          {% if product.benefits %}<details open><summary>Why it's good for you</summary><p class="muted" style="margin:.5rem 0 0">{{ product.benefits }}</p></details>{% endif %}
+          {% if product.storageTips %}<details><summary>How to store</summary><p class="muted" style="margin:.5rem 0 0">{{ product.storageTips }}</p></details>{% endif %}
+          {% if product.origin or product.shelfLife %}
+          <details><summary>Product details</summary>
+            <dl class="kv" style="margin:.5rem 0 0">
+              {% if product.origin %}<dt>Origin</dt><dd>{{ product.origin }}</dd>{% endif %}
+              {% if product.shelfLife %}<dt>Shelf life</dt><dd>{{ product.shelfLife }}</dd>{% endif %}
+            </dl>
+          </details>
+          {% endif %}
+          <details id="bulk" {% if unavailable %}open{% endif %}>
+            <summary>Need a large quantity? Ask for a bulk price</summary>
+            <form method="post" action="{{ url_for('store.bulk') }}" class="stack" style="margin-top:.75rem">
+              <input type="hidden" name="productId" value="{{ product.id }}">
+              <input type="hidden" name="productName" value="{{ product.name }}">
+              <div class="fields-2">
+                <div class="field"><label for="b-name">Your name</label><input class="input" id="b-name" name="name" required autocomplete="name" value="{{ me.name if me else '' }}"></div>
+                <div class="field"><label for="b-email">Email</label><input class="input" id="b-email" type="email" name="email" required autocomplete="email" value="{{ me.email if me else '' }}"></div>
+              </div>
+              <div class="field"><label for="b-qty">How much do you need?</label><input class="input" id="b-qty" name="requiredQuantity" required placeholder="e.g. 10 kg or 50 gift packs"></div>
+              <div class="field"><label for="b-msg">Message (optional)</label><textarea class="input" id="b-msg" name="message" placeholder="Occasion, delivery date, anything else"></textarea></div>
+              <button class="btn-secondary" type="submit">Send request</button>
+            </form>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if related %}
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="section-head"><h2>You may also like</h2></div>
+    <div class="products">
+      {% for p in related[:8] %}{% include "_product_card.html" %}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var form = document.getElementById("buy");
+  if (!form) return;
+  var perKg = parseFloat(form.dataset.perKg) || 0;
+  var disc = parseFloat(form.dataset.discount) || 0;
+  var qty = form.querySelector("input[name=quantity]");
+  var inr = function (n) { return "₹" + Math.round(n).toLocaleString("en-IN"); };
+  function update() {
+    var grams = parseInt((form.querySelector("input[name=weightGrams]:checked") || {}).value || 500, 10);
+    var n = Math.max(1, Math.min(20, parseInt(qty.value, 10) || 1));
+    var full = perKg * grams / 1000;
+    var unit = full * (1 - disc / 100);
+    form.querySelector("[data-price]").textContent = inr(unit);
+    var old = form.querySelector("[data-old]");
+    if (old) old.textContent = inr(full);
+    form.querySelector("[data-total]").textContent = inr(unit * n);
+  }
+  form.querySelectorAll("[data-qty]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      qty.value = Math.max(1, Math.min(20, (parseInt(qty.value, 10) || 1) + parseInt(b.dataset.qty, 10)));
+      update();
+    });
+  });
+  form.addEventListener("change", update);
+  qty.addEventListener("input", update);
+  update();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% from "_icons.html" import icon %}
+{% set ep = request.endpoint or "" %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1b4332">
+  <title>{% block title %}{{ site_name }}{% endblock %}</title>
+  <meta name="description" content="{% block description %}Buy fresh, premium dry fruits online — almonds, cashews, pistachios, dates and more. Choose your weight, order in a few taps and track delivery.{% endblock %}">
+  {% if favicon_url %}<link rel="icon" href="{{ favicon_url }}">{% endif %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  {% if not hide_nav %}
+  <header class="site-header">
+    <div class="container">
+      <div class="hdr">
+        <button class="icon-btn menu-btn" type="button" aria-label="Open menu" data-drawer-open>{{ icon("menu") }}</button>
+        <a class="brand" href="{{ url_for('store.home') }}">{{ site_name }}</a>
+        <nav class="nav-links" aria-label="Main">
+          <a href="{{ url_for('store.home') }}" class="{{ 'active' if ep == 'store.home' }}">Home</a>
+          <a href="{{ url_for('store.shop') }}" class="{{ 'active' if ep == 'store.shop' }}">Shop</a>
+          <a href="{{ url_for('store.offers') }}" class="{{ 'active' if ep == 'store.offers' }}">Offers</a>
+          <a href="{{ url_for('store.collections') }}" class="{{ 'active' if ep.startswith('store.collection') }}">Gift boxes</a>
+          <a href="{{ url_for('store.contact') }}" class="{{ 'active' if ep == 'store.contact' }}">Help</a>
+        </nav>
+        <form class="search search-desktop" action="{{ url_for('store.shop') }}" method="get" role="search">
+          {{ icon("search") }}
+          <input class="input" name="q" placeholder="Search almonds, kaju, dates…" value="{{ request.args.get('q','') if ep == 'store.shop' else '' }}" aria-label="Search products">
+        </form>
+        <div class="hdr-actions">
+          <a class="hdr-link" href="{{ url_for('store.track') }}">{{ icon("truck") }} Track order</a>
+          <a class="hdr-link" href="{{ url_for('store.my_orders') }}">{{ icon("orders") }} {{ 'Hi, ' ~ me.name.split(' ')[0] if me else 'My orders' }}</a>
+          <a class="icon-btn" href="{{ url_for('store.cart') }}" aria-label="Cart, {{ cart_count }} items">
+            {{ icon("cart") }}{% if cart_count %}<span class="count">{{ cart_count }}</span>{% endif %}
+          </a>
+        </div>
+      </div>
+      <form class="search search-mobile" action="{{ url_for('store.shop') }}" method="get" role="search">
+        {{ icon("search") }}
+        <input class="input" name="q" placeholder="Search almonds, kaju, dates…" value="{{ request.args.get('q','') if ep == 'store.shop' else '' }}" aria-label="Search products">
+      </form>
+    </div>
+  </header>
+
+  <div class="drawer-overlay" data-drawer-close></div>
+  <aside class="drawer" aria-label="Menu">
+    <div class="drawer-head">
+      <span class="brand">{{ site_name }}</span>
+      <button class="icon-btn" type="button" aria-label="Close menu" data-drawer-close>{{ icon("close") }}</button>
+    </div>
+    {% if me %}<p class="muted small" style="margin:0 .75rem .5rem">Welcome back, <strong>{{ me.name.split(' ')[0] }}</strong></p>{% endif %}
+    <a class="drawer-link {{ 'active' if ep == 'store.home' }}" href="{{ url_for('store.home') }}">{{ icon("home") }} Home</a>
+    <a class="drawer-link {{ 'active' if ep == 'store.shop' }}" href="{{ url_for('store.shop') }}">{{ icon("shop") }} Shop all products</a>
+    <a class="drawer-link {{ 'active' if ep == 'store.offers' }}" href="{{ url_for('store.offers') }}">{{ icon("tag") }} Offers</a>
+    <a class="drawer-link" href="{{ url_for('store.collections') }}">{{ icon("box") }} Gift boxes &amp; combos</a>
+    <h4>Your orders</h4>
+    <a class="drawer-link {{ 'active' if ep.startswith('store.track') }}" href="{{ url_for('store.track') }}">{{ icon("truck") }} Track my order</a>
+    <a class="drawer-link {{ 'active' if ep == 'store.my_orders' }}" href="{{ url_for('store.my_orders') }}">{{ icon("orders") }} My orders &amp; order again</a>
+    <a class="drawer-link" href="{{ url_for('store.cart') }}">{{ icon("cart") }} Cart{% if cart_count %} ({{ cart_count }}){% endif %}</a>
+    {% if nav_categories %}
+    <h4>Categories</h4>
+    {% for c in nav_categories %}
+      <a class="drawer-link" href="{{ url_for('store.shop', category=c.slug) }}">{{ c.name }}</a>
+    {% endfor %}
+    {% endif %}
+    <h4>Help</h4>
+    <a class="drawer-link" href="{{ url_for('store.contact') }}">{{ icon("phone") }} Contact us</a>
+    <a class="drawer-link" href="{{ url_for('store.about') }}">{{ icon("leaf") }} About us</a>
+  </aside>
+  {% endif %}
+
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) if not hide_nav else [] %}
+      {% if messages %}
+      <div class="container"><div class="flashes" role="status">
+        {% for cat, msg in messages %}
+          <div class="flash {{ cat }}">
+            <span>{{ msg }}</span>
+            {% if cat == 'cart' %}<a href="{{ url_for('store.cart') }}">View cart</a>{% endif %}
+          </div>
+        {% endfor %}
+      </div></div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if not hide_nav %}
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="display" style="font-size:1.5rem;margin:0 0 .5rem">{{ site_name }}</p>
+          <p>Fresh, hand-sorted dry fruits packed to order and delivered to your door.</p>
+          <form action="{{ url_for('store.newsletter') }}" method="post" class="row" style="max-width:380px;flex-wrap:nowrap">
+            <input class="input" type="email" name="email" required placeholder="Your email for offers" aria-label="Email for offers">
+            <button class="btn btn-gold" type="submit">Join</button>
+          </form>
+        </div>
+        <div class="footer-links">
+          <h3 style="font-size:1rem">Shop</h3>
+          <a href="{{ url_for('store.shop') }}">All products</a>
+          <a href="{{ url_for('store.offers') }}">Offers</a>
+          <a href="{{ url_for('store.collections') }}">Gift boxes</a>
+        </div>
+        <div class="footer-links">
+          <h3 style="font-size:1rem">Help</h3>
+          <a href="{{ url_for('store.track') }}">Track my order</a>
+          <a href="{{ url_for('store.my_orders') }}">My orders</a>
+          <a href="{{ url_for('store.contact') }}">Contact us</a>
+          <a href="{{ url_for('store.refund') }}">Refunds</a>
+        </div>
+      </div>
+      <div class="footer-bottom row between">
+        <span>© {{ site_name }}</span>
+        <span><a href="{{ url_for('store.privacy') }}">Privacy</a> · <a href="{{ url_for('store.terms') }}">Terms</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <nav class="bottom-nav" aria-label="Quick links">
+    <a href="{{ url_for('store.home') }}" class="{{ 'active' if ep == 'store.home' }}">{{ icon("home") }}<span>Home</span></a>
+    <a href="{{ url_for('store.shop') }}" class="{{ 'active' if ep in ('store.shop', 'store.product') }}">{{ icon("shop") }}<span>Shop</span></a>
+    <a href="{{ url_for('store.track') }}" class="{{ 'active' if ep.startswith('store.track') }}">{{ icon("truck") }}<span>Track</span></a>
+    <a href="{{ url_for('store.my_orders') }}" class="{{ 'active' if ep in ('store.my_orders', 'store.my_details', 'store.order') }}">{{ icon("orders") }}<span>Orders</span></a>
+    <a href="{{ url_for('store.cart') }}" class="{{ 'active' if ep in ('store.cart', 'store.checkout') }}">{{ icon("cart") }}{% if cart_count %}<span class="count">{{ cart_count }}</span>{% endif %}<span>Cart</span></a>
+  </nav>
+
+  <script>
+  (function () {
+    document.querySelectorAll("[data-drawer-open]").forEach(function (b) {
+      b.addEventListener("click", function () { document.body.classList.add("drawer-open"); });
+    });
+    document.querySelectorAll("[data-drawer-close]").forEach(function (b) {
+      b.addEventListener("click", function () { document.body.classList.remove("drawer-open"); });
+    });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") document.body.classList.remove("drawer-open"); });
+  })();
+  </script>
+  {% endif %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

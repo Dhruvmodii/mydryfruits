@@ -13,3 +13,8 @@ logs
 *.tsbuildinfo
 packages/db/generated
 apps/api/uploads
+.vercel
+__pycache__/
+*.pyc
+.venv/
+venv/

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Order {{ order.orderNumber }} | {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:1rem">
+  <div class="container" style="max-width:760px">
+    <div class="success-hero">
+      <div class="tick">{{ icon("check") }}</div>
+      <h1>Thank you, {{ order.customerName.split(' ')[0] }}!</h1>
+      <p class="muted">Your order is placed. We've sent the details to <strong>{{ order.customerEmail | mask_email if limited else order.customerEmail }}</strong>.</p>
+      <div class="copy-box">
+        <span>Order no. {{ order.orderNumber }}</span>
+        <button class="btn-ghost btn-sm" type="button" data-copy="{{ order.orderNumber }}">Copy</button>
+      </div>
+      <p class="muted small" style="margin-top:.5rem">Keep this number to track your order on any phone.</p>
+    </div>
+
+    <div class="stack" style="margin-top:1rem">
+      <div class="eta {{ t.state }}">
+        <div class="small muted">{{ 'Delivery' if not t.cancelled else 'Status' }}</div>
+        {% if t.expected %}<div class="when">{{ t.expected }}</div>{% endif %}
+        <p style="margin:0">{{ t.message }}</p>
+      </div>
+
+      <div class="panel">
+        {% set horizontal = True %}
+        {% include "_progress.html" %}
+      </div>
+
+      <div class="row">
+        <a class="btn" href="{{ url_for('store.track_order', order_number=order.orderNumber) }}">{{ icon("truck") }} Track this order</a>
+        <a class="btn-secondary" href="{{ url_for('store.invoice', order_number=order.orderNumber) }}">{{ icon("orders") }} Invoice</a>
+        <a class="btn-ghost" href="{{ url_for('store.shop') }}">Continue shopping</a>
+      </div>
+
+      <div class="panel">
+        <h2 style="font-size:1.15rem">What you ordered</h2>
+        <div class="mini-items">
+          {% for i in order.items %}
+          <div class="mini-item">
+            <img src="{{ i.imageUrl or 'https://placehold.co/100x100/efe9df/1b4332?text=MDF' }}" alt="">
+            <span>{{ i.productName }}<br><span class="muted small">{{ format_weight(i.weightGrams) }} × {{ i.quantity }}</span></span>
+            <strong>{{ format_inr(i.lineTotal) }}</strong>
+          </div>
+          {% endfor %}
+        </div>
+        <div style="margin-top:.75rem">
+          {% if order.discount|float %}<div class="summary-row" style="color:var(--ok)"><span>Discount{% if order.couponCode %} ({{ order.couponCode }}){% endif %}</span><span>− {{ format_inr(order.discount) }}</span></div>{% endif %}
+          <div class="summary-row total"><span>Total</span><span>{{ format_inr(order.total) }}</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 style="font-size:1.15rem">Delivering to</h2>
+        <p style="margin:0">{{ order.customerName }}<br>{% if not limited %}{{ order.addressLine1 }}{% if order.addressLine2 %}, {{ order.addressLine2 }}{% endif %}<br>{% endif %}{{ order.city }}, {{ order.state }} {{ order.pincode }}</p>
+        {% if not limited %}<div class="note-box" style="margin-top:.75rem">{{ icon("shield") }}<span>Your details are saved on this device, so next time checkout is pre-filled. <a class="link" href="{{ url_for('store.my_orders') }}">See all your orders</a></span></div>{% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll("[data-copy]").forEach(function (b) {
+  b.addEventListener("click", function () {
+    var text = b.dataset.copy;
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () {
+      b.textContent = "Copied";
+      setTimeout(function () { b.textContent = "Copy"; }, 1500);
+    }).catch(function () { window.prompt("Copy your order number:", text); });
+  });
+});
+</script>
+{% endblock %}

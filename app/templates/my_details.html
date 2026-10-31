@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}My saved details | {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:1.25rem">
+  <div class="container" style="max-width:720px">
+    <a class="link small" href="{{ url_for('store.my_orders') }}">← Back to my orders</a>
+    <h1 style="margin-top:.5rem">My saved details</h1>
+    <p class="muted">These are filled in automatically when you checkout on this device.</p>
+    {% if error %}<div class="flash error" role="alert" style="margin-bottom:1rem">{{ error }}</div>{% endif %}
+    <form method="post" class="panel stack" novalidate>
+      <div class="field">
+        <label for="name">Full name</label>
+        <input class="input" id="name" name="name" required autocomplete="name" value="{{ details.name }}">
+      </div>
+      <div class="fields-2">
+        <div class="field">
+          <label for="phone">Mobile number</label>
+          <input class="input" id="phone" name="phone" type="tel" inputmode="numeric" required autocomplete="tel-national" value="{{ details.phone }}">
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input class="input" id="email" value="{{ details.email }}" disabled>
+          <span class="hint">Email is linked to your orders and can't be changed here.</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="addressLine1">House / flat no., building, street</label>
+        <input class="input" id="addressLine1" name="addressLine1" required autocomplete="address-line1" value="{{ details.addressLine1 }}">
+      </div>
+      <div class="field">
+        <label for="addressLine2">Area / landmark (optional)</label>
+        <input class="input" id="addressLine2" name="addressLine2" autocomplete="address-line2" value="{{ details.addressLine2 }}">
+      </div>
+      <div class="fields-2">
+        <div class="field">
+          <label for="pincode">PIN code</label>
+          <input class="input" id="pincode" name="pincode" required inputmode="numeric" maxlength="6" autocomplete="postal-code" value="{{ details.pincode }}">
+        </div>
+        <div class="field">
+          <label for="city">City</label>
+          <input class="input" id="city" name="city" required autocomplete="address-level2" value="{{ details.city }}">
+        </div>
+      </div>
+      <div class="field">
+        <label for="state">State</label>
+        <input class="input" id="state" name="state" required autocomplete="address-level1" value="{{ details.state }}">
+      </div>
+      <button class="btn" type="submit">Save my details</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

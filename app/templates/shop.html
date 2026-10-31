@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{% if q %}"{{ q }}" — {% endif %}Shop dry fruits | {{ site_name }}{% endblock %}
+{% block content %}
+{% set current_cat = (categories | selectattr("slug", "equalto", category) | list | first) if category else None %}
+<section class="section" style="padding-top:1.25rem">
+  <div class="container">
+    <h1>{% if q %}Results for "{{ q }}"{% elif current_cat %}{{ current_cat.name }}{% else %}Shop all dry fruits{% endif %}</h1>
+    <p class="muted">{{ products|length }} product{{ '' if products|length == 1 else 's' }}{% if q or category %} · <a class="link" href="{{ url_for('store.shop') }}">Clear filters</a>{% endif %}</p>
+
+    <nav class="chips" aria-label="Categories">
+      <a class="chip {{ 'active' if not category }}" href="{{ url_for('store.shop', q=q or None, sort=sort if sort != 'newest' else None) }}">All</a>
+      {% for c in categories %}
+        <a class="chip {{ 'active' if category == c.slug }}" href="{{ url_for('store.shop', category=c.slug, q=q or None, sort=sort if sort != 'newest' else None) }}">{{ c.name }}</a>
+      {% endfor %}
+    </nav>
+
+    <form method="get" class="row" style="margin:.5rem 0 1rem;flex-wrap:nowrap">
+      {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+      {% if category %}<input type="hidden" name="category" value="{{ category }}">{% endif %}
+      <label for="sort" class="small muted" style="white-space:nowrap">Sort by</label>
+      <select id="sort" class="input" name="sort" onchange="this.form.submit()" style="max-width:220px;min-height:42px">
+        <option value="newest" {% if sort=='newest' %}selected{% endif %}>Recommended</option>
+        <option value="price-asc" {% if sort=='price-asc' %}selected{% endif %}>Price: low to high</option>
+        <option value="price-desc" {% if sort=='price-desc' %}selected{% endif %}>Price: high to low</option>
+      </select>
+      <noscript><button class="btn btn-sm" type="submit">Apply</button></noscript>
+    </form>
+
+    {% if products %}
+    <div class="products">
+      {% for p in products %}{% include "_product_card.html" %}{% endfor %}
+    </div>
+    {% else %}
+    <div class="panel empty">
+      {{ icon("search") }}
+      <h2>No products found</h2>
+      <p class="muted">Try a simpler word like "almond", "kaju" or "dates", or browse all products.</p>
+      <a class="btn" href="{{ url_for('store.shop') }}">See all products</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

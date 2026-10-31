@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Offers | {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container">
+    <h1>Offers</h1>
+    <div class="grid cards-3" style="margin-top:1.5rem">
+      {% for p in products %}{% include "_product_card.html" %}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

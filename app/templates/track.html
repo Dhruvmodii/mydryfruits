@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Track your order | {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:1.25rem">
+  <div class="container" style="max-width:760px">
+    <h1>Track your order</h1>
+
+    {% if active %}
+    <p class="muted">These orders are on their way to you. Tap one to see every step.</p>
+    <div class="stack" style="margin-bottom:1.25rem">
+      {% for o in active %}
+      {% set t = views[o.id] %}
+      <a class="order-card" href="{{ url_for('store.track_order', order_number=o.orderNumber) }}">
+        <div class="order-head">
+          <div>
+            <strong>{{ o.createdAt | ist_day }} · {{ format_inr(o.total) }}</strong>
+            <div class="muted small">{{ o.items | map(attribute='productName') | join(', ') | truncate(70) }}</div>
+          </div>
+          <span class="pill {{ o.status }}">{{ t.statusLabel }}</span>
+        </div>
+        {% set compact = True %}
+        {% include "_progress.html" %}
+        <span class="link small">See full tracking →</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% elif knows_visitor %}
+    <div class="panel empty" style="margin-bottom:1.25rem">
+      {{ icon("check") }}
+      <h2>Nothing on the way right now</h2>
+      <p class="muted">{% if delivered_count %}All your orders have been delivered.{% else %}You don't have any orders yet.{% endif %}</p>
+      <div class="row" style="justify-content:center">
+        <a class="btn" href="{{ url_for('store.my_orders') }}">{{ icon("orders") }} See order history</a>
+        <a class="btn-secondary" href="{{ url_for('store.shop') }}">Shop</a>
+      </div>
+    </div>
+    {% else %}
+    <p class="muted">See where your order is: placed, confirmed, packed, on the way or delivered.</p>
+    {% endif %}
+
+    {% if lookup_email %}
+    <div class="note-box row between" style="margin-bottom:1rem">
+      <span>Showing orders for <strong>{{ lookup_email | mask_email }}</strong></span>
+      <form method="post" action="{{ url_for('store.clear_lookup') }}"><input type="hidden" name="next" value="{{ url_for('store.track') }}"><button class="btn-ghost btn-sm" type="submit">Use another email</button></form>
+    </div>
+    {% endif %}
+
+    {% if not knows_visitor %}
+      {% set next_target = "track" %}
+      {% set button_label = "Track" %}
+      {% include "_find_orders.html" %}
+    {% else %}
+    <details class="panel">
+      <summary style="cursor:pointer;font-weight:600;color:var(--forest)">Ordered with another email?</summary>
+      <div style="margin-top:.75rem">
+        {% set next_target = "track" %}
+        {% set button_label = "Track" %}
+        {% include "_find_orders.html" %}
+      </div>
+    </details>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

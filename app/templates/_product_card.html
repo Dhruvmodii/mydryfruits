@@ -1,0 +1,37 @@
+{% set unavailable = (not p.inStock) or p.onDemand %}
+{% set per_kg = p.pricePerKg | float %}
+{% set disc = p.discountPercent or 0 %}
+{% set from_price = per_kg * 0.25 * (1 - disc / 100) %}
+<article class="pcard">
+  <a class="pcard-img" href="{{ url_for('store.product', slug=p.slug) }}">
+    <img src="{{ p.imageUrl or 'https://placehold.co/400x400/efe9df/1b4332?text=MyDryFruits' }}" alt="{{ p.name }}" loading="lazy">
+    <span class="pcard-badges">
+      {% if disc %}<span class="badge red">{{ disc }}% off</span>{% endif %}
+      {% if p.isBestSeller %}<span class="badge">Bestseller</span>{% elif p.isPremium %}<span class="badge soft">Premium</span>{% elif p.isNewArrival %}<span class="badge soft">New</span>{% endif %}
+      {% if unavailable %}<span class="badge soft">Out of stock</span>{% endif %}
+    </span>
+  </a>
+  <div class="pcard-body">
+    <a href="{{ url_for('store.product', slug=p.slug) }}"><h3 class="pcard-name">{{ p.name }}</h3></a>
+    {% if p.description and p.description|lower != p.name|lower %}<p class="pcard-local">{{ p.description }}</p>{% endif %}
+    <p class="price" style="margin:0">
+      {{ format_inr(from_price) }} <small>/ 250g</small>
+      <br><small>{{ format_inr(per_kg * (1 - disc / 100)) }} per kg</small>
+    </p>
+    {% if unavailable %}
+      <a class="btn-secondary btn-sm btn-block" href="{{ url_for('store.product', slug=p.slug) }}#bulk">Ask for price</a>
+    {% else %}
+    <form method="post" action="{{ url_for('store.cart_add') }}">
+      <input type="hidden" name="productId" value="{{ p.id }}">
+      <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
+      <label class="sr-only" for="w-{{ p.id }}">Weight</label>
+      <select class="input" id="w-{{ p.id }}" name="weightGrams">
+        {% for w in [250, 500, 1000] %}
+          <option value="{{ w }}" {% if w == 500 %}selected{% endif %}>{{ format_weight(w) }} — {{ format_inr(per_kg * w / 1000 * (1 - disc / 100)) }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn" type="submit">Add to cart</button>
+    </form>
+    {% endif %}
+  </div>
+</article>

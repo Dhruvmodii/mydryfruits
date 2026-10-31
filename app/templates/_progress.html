@@ -1,0 +1,24 @@
+{# Order progress bar. Needs `t` = tracking.view(order). Optional: compact=True for a thin bar. #}
+{% set st = t.style %}
+<div class="track" style="--t-active: {{ st.activeColor }}; --t-inactive: {{ st.inactiveColor }}; --t-accent: {{ st.accentColor }};">
+  {% if compact %}
+    <div class="row between small" style="margin-bottom:.35rem">
+      <strong style="color:var(--t-active)">{{ t.statusLabel }}</strong>
+      {% if t.expected and not t.cancelled %}<span class="muted">{{ t.expected }}</span>{% endif %}
+    </div>
+    <div class="mini-progress" role="progressbar" aria-valuenow="{{ t.progress }}" aria-valuemin="0" aria-valuemax="100" aria-label="Order progress"><span style="width: {{ [t.progress, 6] | max if not t.cancelled else 100 }}%;{% if t.cancelled %}background:#b42318{% endif %}"></span></div>
+  {% else %}
+    <ol class="track-steps {{ 'horizontal' if horizontal }}">
+      {% for s in t.steps %}
+      <li class="track-step {{ 'done' if s.done }} {{ 'current' if s.current }}">
+        <span class="track-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+        <div>
+          <h3>{{ s.label }}</h3>
+          {% if st.showDescriptions and s.description and (s.done or s.current) %}<p>{{ s.description }}</p>{% endif %}
+          {% if st.showTimes and s.time %}<time>{{ s.time }}</time>{% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  {% endif %}
+</div>

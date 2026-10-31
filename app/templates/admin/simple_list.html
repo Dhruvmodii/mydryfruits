@@ -1,0 +1,21 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block admin %}
+<h1>{{ title }}</h1>
+<form method="post" class="card grid" style="gap:.5rem;margin:1rem 0">
+  <input class="input" name="name" required placeholder="Name">
+  <input class="input" name="description" placeholder="Description">
+  <button class="btn" type="submit">Add</button>
+</form>
+<table>
+  {% for i in items %}
+  <tr>
+    <td>{{ i.name }}</td>
+    <td>{{ i.slug }}</td>
+    <td>
+      <form method="post"><input type="hidden" name="id" value="{{ i.id }}"><button name="action" value="delete" class="btn-secondary">Delete</button></form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

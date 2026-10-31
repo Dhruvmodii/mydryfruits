@@ -1,0 +1,13 @@
+{
+  "framework": null,
+  "installCommand": "echo skip-npm",
+  "buildCommand": "echo skip-node-build",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index" }
+  ],
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "app/**"
+    }
+  }
+}

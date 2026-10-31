@@ -1,0 +1,12 @@
+{# Look up orders by email only. `next_target` = "track" to come back to the Track page. #}
+<form method="post" action="{{ url_for('store.find_orders') }}" class="panel stack">
+  <input type="hidden" name="next" value="{{ next_target or '' }}">
+  <div class="field">
+    <label for="f-email">Email you used when ordering</label>
+    <div class="row" style="flex-wrap:nowrap">
+      <input class="input" id="f-email" name="email" type="email" required autocomplete="email" inputmode="email" placeholder="name@gmail.com">
+      <button class="btn" type="submit" style="white-space:nowrap">{{ button_label or 'Show my orders' }}</button>
+    </div>
+    <span class="hint">No password needed. We'll show every order placed with this email.</span>
+  </div>
+</form>

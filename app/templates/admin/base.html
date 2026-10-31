@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% set hide_nav = true %}
+{% block content %}
+{% set ep = request.endpoint or "" %}
+<div class="admin">
+  <aside>
+    <div class="admin-brand">
+      <div>
+        <p class="display" style="font-size:1.3rem;margin:0;color:#fff">MyDryFruits</p>
+        <p style="color:rgba(247,244,238,.6);margin:0;font-size:.8rem">Admin · <a href="{{ url_for('store.home') }}" target="_blank" rel="noopener" style="display:inline;padding:0;color:var(--gold)">View shop ↗</a></p>
+      </div>
+      <form method="post" action="{{ url_for('admin.logout') }}">
+        <button class="btn-secondary logout" type="submit">Log out</button>
+      </form>
+    </div>
+    <nav class="admin-nav" aria-label="Admin">
+      {% for endpoint, label in admin_nav %}
+        <a class="{% if ep == endpoint or (endpoint == 'admin.orders' and ep == 'admin.order_detail') %}active{% endif %}" href="{{ url_for(endpoint) }}">{{ label }}</a>
+      {% endfor %}
+    </nav>
+  </aside>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}<div class="flashes">{% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}</div>{% endif %}
+    {% endwith %}
+    {% block admin %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

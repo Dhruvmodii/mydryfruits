@@ -1,0 +1,17 @@
+{% extends "admin/base.html" %}
+{% block title %}Media{% endblock %}
+{% block admin %}
+<h1>Media</h1>
+<form method="post" enctype="multipart/form-data" class="card" style="margin:1rem 0">
+  <input type="file" name="file" accept="image/*" required>
+  <button class="btn" type="submit">Upload</button>
+</form>
+<div class="grid cards-3">
+  {% for m in items %}
+  <div class="card">
+    <img src="{{ m.url }}" alt="{{ m.alt or '' }}">
+    <form method="post"><input type="hidden" name="id" value="{{ m.id }}"><button name="action" value="delete" class="btn-secondary">Delete</button></form>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

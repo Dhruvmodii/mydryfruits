@@ -1,0 +1,23 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block admin %}
+<h1>Dashboard</h1>
+<div class="grid cards-3" style="margin:1rem 0">
+  <div class="card"><p class="muted">Orders</p><h2>{{ orders }}</h2></div>
+  <div class="card"><p class="muted">Products</p><h2>{{ products }}</h2></div>
+  <div class="card"><p class="muted">Customers</p><h2>{{ customers }}</h2></div>
+  <div class="card"><p class="muted">Revenue</p><h2>{{ format_inr(revenue) }}</h2></div>
+</div>
+<h2>Recent orders</h2>
+<table>
+  <tr><th>Number</th><th>Customer</th><th>Total</th><th>Status</th></tr>
+  {% for o in recent %}
+  <tr>
+    <td>{{ o.orderNumber }}</td>
+    <td>{{ o.customerName }}</td>
+    <td>{{ format_inr(o.total) }}</td>
+    <td>{{ o.status }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

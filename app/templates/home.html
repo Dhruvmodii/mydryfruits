@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ site_name }} — Fresh Premium Dry Fruits Online{% endblock %}
+{% block content %}
+{% set slides = hero.get('slides') or [] %}
+{% if slides %}
+<section class="hero-slider" data-auto="{{ 'true' if hero.get('autoScroll', true) else 'false' }}" data-interval="{{ hero.get('scrollInterval') or 3000 }}" aria-roledescription="carousel">
+  {% for slide in slides %}
+  <div class="slide{% if loop.first %} active{% endif %}"{% if slide.get('background') %} style="background: {{ slide.get('background') }}"{% endif %}>
+    <div class="container slide-inner">
+      <div class="slide-text">
+        {% if slide.get('badge') %}<span class="slide-badge">{{ slide.get('badge') }}</span>{% endif %}
+        {% if loop.first %}<h1>{{ slide.get('headline') or '' }}</h1>{% else %}<h2 class="display" style="font-size:clamp(1.7rem,7vw,3.6rem);font-weight:700;margin:0 0 .6rem;line-height:1.1">{{ slide.get('headline') or '' }}</h2>{% endif %}
+        <p>{{ slide.get('subheading') or '' }}</p>
+        {% if slide.get('highlight') %}<p class="slide-highlight">{{ slide.get('highlight') }}</p>{% endif %}
+        <div class="slide-ctas">
+          {% set cta = slide.get('ctaPrimary') or {} %}
+          <a class="btn" href="{{ cta.get('href') or url_for('store.shop') }}">{{ cta.get('label') or 'Shop now' }}</a>
+          {% set cta2 = slide.get('ctaSecondary') %}
+          {% if cta2 %}<a class="btn-secondary" href="{{ cta2.get('href') or url_for('store.shop') }}">{{ cta2.get('label') or 'Learn more' }}</a>{% endif %}
+        </div>
+      </div>
+      {% if slide.get('imageUrl') %}
+      <div class="slide-image">
+        <img src="{{ slide.get('imageUrl') }}" alt="{{ slide.get('headline') or '' }}" loading="{{ 'eager' if loop.first else 'lazy' }}" onerror="this.parentElement.style.display='none'">
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  {% if slides|length > 1 %}
+  <button class="slide-nav prev" type="button" aria-label="Previous slide">&#8249;</button>
+  <button class="slide-nav next" type="button" aria-label="Next slide">&#8250;</button>
+  <div class="slide-dots">
+    {% for slide in slides %}
+    <button type="button" class="dot{% if loop.first %} active{% endif %}" aria-label="Show slide {{ loop.index }}"></button>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+{% else %}
+<section class="hero">
+  <div class="container">
+    <h1>{{ hero.get('headline') or 'Premium Dry Fruits Delivered Fresh' }}</h1>
+    <p class="muted">{{ hero.get('subheading') or '' }}</p>
+    <a class="btn" href="{{ url_for('store.shop') }}">Shop now</a>
+  </div>
+</section>
+{% endif %}
+
+<section class="section" style="padding-top:1.25rem;padding-bottom:0">
+  <div class="container">
+    <div class="trust-row">
+      <span class="trust">{{ icon("leaf") }} 100% natural</span>
+      <span class="trust">{{ icon("box") }} Freshly packed</span>
+      <span class="trust">{{ icon("truck") }} Track every order</span>
+      <span class="trust">{{ icon("shield") }} {{ years }}+ years family business</span>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <h2>How to order</h2>
+        <p class="muted">No sign-up needed. It takes about a minute.</p>
+      </div>
+    </div>
+    <div class="steps-how">
+      <div class="how"><h3>Pick a product</h3><p>Browse the shop or search, e.g. "badam" or "kaju".</p></div>
+      <div class="how"><h3>Choose weight</h3><p>250g, 500g, 1kg and more. Tap "Add to cart".</p></div>
+      <div class="how"><h3>Enter address</h3><p>Name, phone and address. We remember it for next time.</p></div>
+      <div class="how"><h3>Track delivery</h3><p>See every step of your order under "Track".</p></div>
+    </div>
+  </div>
+</section>
+
+{% if categories %}
+<section class="section" style="padding-top:0">
+  <div class="container">
+    <div class="section-head">
+      <h2>Shop by category</h2>
+      <a class="link small" href="{{ url_for('store.shop') }}">See all</a>
+    </div>
+    <div class="cat-grid">
+      {% for c in categories %}
+      <a class="cat-card" href="{{ url_for('store.shop', category=c.slug) }}">
+        <h3>{{ c.name }}</h3>
+        <span>{{ c.productCount }} products →</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if featured %}
+<section class="section" style="background:var(--cream-dark)">
+  <div class="container">
+    <div class="section-head">
+      <div>
+        <h2>Customer favourites</h2>
+        <p class="muted">Bestsellers and new arrivals, picked for you.</p>
+      </div>
+      <a class="link small" href="{{ url_for('store.shop') }}">See all</a>
+    </div>
+    <div class="products">
+      {% for p in featured %}{% include "_product_card.html" %}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if reviews %}
+<section class="section">
+  <div class="container">
+    <div class="section-head"><h2>What customers say</h2></div>
+    <div class="reviews">
+      {% for r in reviews %}
+      <figure class="review" style="margin:0">
+        <div class="stars" aria-label="{{ r.rating }} out of 5">{{ "★" * r.rating }}{{ "☆" * (5 - r.rating) }}</div>
+        <blockquote style="margin:.5rem 0">{{ r.comment }}</blockquote>
+        <figcaption class="muted small"><strong>{{ r.customerName }}</strong>{% if r.productName %} · {{ r.productName }}{% endif %}</figcaption>
+      </figure>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if faqs %}
+<section class="section" style="padding-top:0">
+  <div class="container" style="max-width:820px">
+    <div class="section-head"><h2>Questions? Answers</h2></div>
+    <div class="faq">
+      {% for f in faqs %}
+      <details{% if loop.first %} open{% endif %}><summary>{{ f.question }}</summary><p>{{ f.answer }}</p></details>
+      {% endfor %}
+    </div>
+    <p class="muted small center" style="margin-top:1rem">Still need help? <a class="link" href="{{ url_for('store.contact') }}">Contact us</a></p>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var root = document.querySelector(".hero-slider");
+  if (!root) return;
+  var slides = root.querySelectorAll(".slide");
+  var dots = root.querySelectorAll(".dot");
+  if (slides.length < 2) return;
+  var i = 0, timer = null;
+  var auto = root.dataset.auto === "true";
+  var interval = Math.max(1500, parseInt(root.dataset.interval, 10) || 3000);
+  function show(n) {
+    slides[i].classList.remove("active");
+    if (dots[i]) dots[i].classList.remove("active");
+    i = (n + slides.length) % slides.length;
+    slides[i].classList.add("active");
+    if (dots[i]) dots[i].classList.add("active");
+  }
+  function restart() {
+    if (!auto) return;
+    clearInterval(timer);
+    timer = setInterval(function () { show(i + 1); }, interval);
+  }
+  root.querySelector(".next").addEventListener("click", function () { show(i + 1); restart(); });
+  root.querySelector(".prev").addEventListener("click", function () { show(i - 1); restart(); });
+  dots.forEach(function (d, n) { d.addEventListener("click", function () { show(n); restart(); }); });
+  root.addEventListener("mouseenter", function () { clearInterval(timer); });
+  root.addEventListener("mouseleave", restart);
+  var startX = null;
+  root.addEventListener("touchstart", function (e) { startX = e.touches[0].clientX; clearInterval(timer); }, { passive: true });
+  root.addEventListener("touchend", function (e) {
+    if (startX === null) return;
+    var dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1));
+    startX = null;
+    restart();
+  });
+  restart();
+})();
+</script>
+{% endblock %}

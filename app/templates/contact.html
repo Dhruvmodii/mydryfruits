@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Contact | {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container" style="max-width:640px">
+    <h1>Contact</h1>
+    <p class="muted">{{ biz.email }} {{ biz.phone }}</p>
+    <form method="post" class="grid" style="gap:.75rem;margin-top:1rem">
+      <input class="input" name="name" required placeholder="Name">
+      <input class="input" type="email" name="email" required placeholder="Email">
+      <textarea class="input" name="message" required placeholder="Message"></textarea>
+      <button class="btn" type="submit">Send</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

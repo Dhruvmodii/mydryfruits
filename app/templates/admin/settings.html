@@ -1,0 +1,136 @@
+{% extends "admin/base.html" %}
+{% block title %}Settings{% endblock %}
+{% block admin %}
+<h1>Settings</h1>
+
+{% set sg = integrations.sendgrid %}
+{% set wa = integrations.whatsapp %}
+
+<section id="integrations">
+  <h2>Mail &amp; WhatsApp</h2>
+  <p class="muted">Keys are stored in your database and never shown again after saving. Leave a key field empty to keep the saved one.</p>
+
+  <form method="post" action="{{ url_for('admin.settings_integrations') }}" class="settings-grid">
+    <div class="card grid" style="gap:.6rem">
+      <div class="settings-head">
+        <h3>Email</h3>
+        <span class="status {{ 'on' if email_ready else 'off' }}">
+          {{ 'Connected' if email_ready else 'Not set up' }}
+        </span>
+      </div>
+      <input type="hidden" name="sendgrid.enabled__present" value="1">
+      <label><input type="checkbox" name="sendgrid.enabled" {% if sg.enabled %}checked{% endif %}> Send emails (order confirmation, admin alert, bulk enquiry)</label>
+
+      <label class="muted">Email provider</label>
+      <select class="input js-email-provider" name="sendgrid.provider">
+        <option value="mailjet" {% if sg.provider == 'mailjet' %}selected{% endif %}>Mailjet (free: 200 emails/day)</option>
+        <option value="sendgrid" {% if sg.provider != 'mailjet' %}selected{% endif %}>SendGrid</option>
+      </select>
+
+      <label class="muted">API Key</label>
+      <input class="input" type="password" name="sendgrid.apiKey" autocomplete="new-password" placeholder="{{ sendgrid_key_hint or 'Paste API key' }}">
+      {% if sendgrid_key_hint %}<label class="muted"><input type="checkbox" name="sendgrid.apiKey__clear"> Remove saved key</label>{% endif %}
+
+      <div class="js-mailjet-only grid" style="gap:.6rem">
+        <label class="muted">Secret Key (Mailjet only)</label>
+        <input class="input" type="password" name="sendgrid.apiSecret" autocomplete="new-password" placeholder="{{ email_secret_hint or 'Paste Mailjet Secret key' }}">
+        {% if email_secret_hint %}<label class="muted"><input type="checkbox" name="sendgrid.apiSecret__clear"> Remove saved secret</label>{% endif %}
+      </div>
+      <small class="muted js-help-mailjet">Mailjet → Account settings → <strong>API Key Management</strong>. Copy both the <strong>API Key</strong> and the <strong>Secret Key</strong>; Mailjet needs the pair.</small>
+      <small class="muted js-help-sendgrid">SendGrid → Settings → API Keys → Create API Key (Mail Send access). Keys start with <code>SG.</code>; no secret is needed.</small>
+
+      <label class="muted">From email (must be a verified sender in your provider)</label>
+      <input class="input" type="email" name="sendgrid.fromEmail" value="{{ sg.fromEmail }}" placeholder="orders@dhruvmodi.online">
+
+      <label class="muted">From name</label>
+      <input class="input" name="sendgrid.fromName" value="{{ sg.fromName }}" placeholder="MyDryFruits">
+
+      <label class="muted">Send new-order alerts to (your email)</label>
+      <input class="input" type="email" name="sendgrid.notifyEmail" value="{{ sg.notifyEmail }}" placeholder="you@gmail.com">
+    </div>
+
+    <div class="card grid" style="gap:.6rem">
+      <div class="settings-head">
+        <h3>WhatsApp — Meta Cloud API</h3>
+        <span class="status {{ 'on' if wa.enabled and wa.apiKey and wa.phoneNumberId else 'off' }}">
+          {{ 'Connected' if wa.enabled and wa.apiKey and wa.phoneNumberId else 'Not set up' }}
+        </span>
+      </div>
+      <input type="hidden" name="whatsapp.enabled__present" value="1">
+      <label><input type="checkbox" name="whatsapp.enabled" {% if wa.enabled %}checked{% endif %}> Send WhatsApp alerts for new orders and bulk enquiries</label>
+
+      <label class="muted">Provider</label>
+      <select class="input" name="whatsapp.provider">
+        <option value="meta" {% if wa.provider == 'meta' %}selected{% endif %}>Meta (WhatsApp Cloud API)</option>
+        <option value="twilio" {% if wa.provider == 'twilio' %}selected{% endif %}>Twilio</option>
+      </select>
+
+      <label class="muted">Access token <span class="muted">(Twilio: Account SID)</span></label>
+      <input class="input" type="password" name="whatsapp.apiKey" autocomplete="new-password" placeholder="{{ whatsapp_key_hint or 'EAAG…' }}">
+      {% if whatsapp_key_hint %}<label class="muted"><input type="checkbox" name="whatsapp.apiKey__clear"> Remove saved token</label>{% endif %}
+
+      <label class="muted">Phone number ID <span class="muted">(Twilio: WhatsApp From number)</span></label>
+      <input class="input" name="whatsapp.phoneNumberId" value="{{ wa.phoneNumberId }}" placeholder="1234567890123456">
+
+      <label class="muted">WhatsApp Business Account ID (optional)</label>
+      <input class="input" name="whatsapp.businessAccountId" value="{{ wa.businessAccountId }}" placeholder="1029384756">
+
+      <label class="muted">Twilio Auth Token (only for Twilio)</label>
+      <input class="input" type="password" name="whatsapp.apiSecret" autocomplete="new-password" placeholder="{{ whatsapp_secret_hint or 'Leave empty for Meta' }}">
+
+      <label class="muted">Your WhatsApp number for alerts</label>
+      <input class="input" name="whatsapp.adminNumber" value="{{ wa.adminNumber }}" placeholder="9876543210">
+
+      <label class="muted">Approved message template name (optional)</label>
+      <input class="input" name="whatsapp.templateName" value="{{ wa.templateName }}" placeholder="order_alert">
+      <label class="muted">Template language</label>
+      <input class="input" name="whatsapp.templateLanguage" value="{{ wa.templateLanguage or 'en' }}" placeholder="en">
+      <small class="muted">Meta only delivers plain text to numbers that messaged you in the last 24 hours. For alerts at any time, create a template in Meta with one body variable <code>{{ '{{1}}' }}</code> and enter its name here; the order summary is sent as that variable.</small>
+    </div>
+
+    <div style="grid-column:1/-1">
+      <button class="btn" type="submit">Save Mail &amp; WhatsApp settings</button>
+    </div>
+  </form>
+
+  <div class="settings-grid" style="margin-top:1rem">
+    <form method="post" action="{{ url_for('admin.settings_test_email') }}" class="card" style="display:flex;gap:.5rem;align-items:center">
+      <input class="input" type="email" name="to" required placeholder="Test email to…" value="{{ sg.notifyEmail }}">
+      <button class="btn-secondary" type="submit">Send test email</button>
+    </form>
+    <form method="post" action="{{ url_for('admin.settings_test_whatsapp') }}" class="card" style="display:flex;gap:.5rem;align-items:center">
+      <input class="input" name="to" required placeholder="Test WhatsApp to…" value="{{ wa.adminNumber }}">
+      <button class="btn-secondary" type="submit">Send test WhatsApp</button>
+    </form>
+  </div>
+</section>
+
+<script>
+(function () {
+  var select = document.querySelector(".js-email-provider");
+  if (!select) return;
+  function sync() {
+    var mailjet = select.value === "mailjet";
+    document.querySelectorAll(".js-mailjet-only, .js-help-mailjet").forEach(function (el) { el.style.display = mailjet ? "" : "none"; });
+    document.querySelectorAll(".js-help-sendgrid").forEach(function (el) { el.style.display = mailjet ? "none" : ""; });
+  }
+  select.addEventListener("change", sync);
+  sync();
+})();
+</script>
+
+<h2 style="margin-top:2.5rem">Other settings</h2>
+{% for i in items %}
+<form method="post" class="card grid" style="gap:.5rem;margin:1rem 0">
+  <input type="hidden" name="key" value="{{ i.key }}">
+  <strong>{{ i.key }}</strong>
+  <textarea class="input" name="value" rows="8" style="font-family:monospace">{{ i.value | tojson(indent=2) }}</textarea>
+  <button class="btn" type="submit">Save</button>
+</form>
+{% endfor %}
+<form method="post" class="card grid" style="gap:.5rem">
+  <input class="input" name="key" placeholder="New key e.g. business">
+  <textarea class="input" name="value" rows="4">{}</textarea>
+  <button class="btn" type="submit">Add setting</button>
+</form>
+{% endblock %}

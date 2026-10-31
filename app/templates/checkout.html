@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Checkout | {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:1.25rem">
+  <div class="container">
+    <div class="progress-steps" aria-label="Checkout steps">
+      <span class="on"><b>1</b> Cart</span><i></i>
+      <span class="on"><b>2</b> Address</span><i></i>
+      <span><b>3</b> Done</span>
+    </div>
+    <h1>Delivery details</h1>
+    {% if remembered %}
+    <div class="note-box" style="margin-bottom:1rem">{{ icon("check") }}<span>Welcome back, <strong>{{ details.name.split(' ')[0] }}</strong>! We filled in your saved details. Change anything below if needed.</span></div>
+    {% else %}
+    <p class="muted">No account needed. We'll save these details on this device so next time it's even faster.</p>
+    {% endif %}
+    {% if error %}<div class="flash error" role="alert" style="margin-bottom:1rem">{{ error }}</div>{% endif %}
+
+    <form method="post" class="checkout-layout" novalidate>
+      <div class="stack">
+        <div class="panel stack">
+          <h2 style="font-size:1.15rem;margin:0">{{ icon("user") }} Your details</h2>
+          <div class="field">
+            <label for="name">Full name</label>
+            <input class="input" id="name" name="name" required autocomplete="name" value="{{ details.name }}" placeholder="e.g. Priya Sharma">
+          </div>
+          <div class="fields-2">
+            <div class="field">
+              <label for="phone">Mobile number</label>
+              <input class="input" id="phone" name="phone" type="tel" inputmode="numeric" required autocomplete="tel-national" maxlength="14" value="{{ details.phone }}" placeholder="10-digit mobile">
+              <span class="hint">The delivery partner will call this number.</span>
+            </div>
+            <div class="field">
+              <label for="email">Email</label>
+              <input class="input" id="email" name="email" type="email" required autocomplete="email" inputmode="email" value="{{ details.email }}" placeholder="name@gmail.com">
+              <span class="hint">We send your order confirmation here.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel stack">
+          <h2 style="font-size:1.15rem;margin:0">{{ icon("home") }} Delivery address</h2>
+          <div class="field">
+            <label for="addressLine1">House / flat no., building, street</label>
+            <input class="input" id="addressLine1" name="addressLine1" required autocomplete="address-line1" value="{{ details.addressLine1 }}" placeholder="e.g. B-204, Lake View Society, SG Road">
+          </div>
+          <div class="field">
+            <label for="addressLine2">Area / landmark (optional)</label>
+            <input class="input" id="addressLine2" name="addressLine2" autocomplete="address-line2" value="{{ details.addressLine2 }}" placeholder="e.g. Near City Mall">
+          </div>
+          <div class="fields-2">
+            <div class="field">
+              <label for="pincode">PIN code</label>
+              <input class="input" id="pincode" name="pincode" required inputmode="numeric" maxlength="6" autocomplete="postal-code" value="{{ details.pincode }}" placeholder="6 digits">
+            </div>
+            <div class="field">
+              <label for="city">City</label>
+              <input class="input" id="city" name="city" required autocomplete="address-level2" value="{{ details.city }}" placeholder="e.g. Ahmedabad">
+            </div>
+          </div>
+          <div class="field">
+            <label for="state">State</label>
+            <input class="input" id="state" name="state" required autocomplete="address-level1" value="{{ details.state }}" placeholder="e.g. Gujarat" list="states">
+            <datalist id="states">
+              {% for s in ["Andhra Pradesh","Assam","Bihar","Chhattisgarh","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu and Kashmir","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Odisha","Punjab","Rajasthan","Tamil Nadu","Telangana","Uttar Pradesh","Uttarakhand","West Bengal"] %}<option value="{{ s }}">{% endfor %}
+            </datalist>
+          </div>
+          <div class="field">
+            <label for="notes">Delivery instructions (optional)</label>
+            <textarea class="input" id="notes" name="notes" placeholder="e.g. Call before coming, leave with security">{{ request.form.get('notes', '') }}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <aside class="panel stack">
+        <h2 style="font-size:1.15rem;margin:0">Your order</h2>
+        <div class="mini-items">
+          {% for i in lines %}
+          <div class="mini-item">
+            <img src="{{ i.imageUrl or 'https://placehold.co/100x100/efe9df/1b4332?text=MDF' }}" alt="">
+            <span>{{ i.name }}<br><span class="muted small">{{ format_weight(i.weightGrams) }} × {{ i.quantity }}</span></span>
+            <strong>{{ format_inr(i.lineTotal) }}</strong>
+          </div>
+          {% endfor %}
+        </div>
+        <a class="link small" href="{{ url_for('store.cart') }}">Edit cart</a>
+
+        <div class="field">
+          <label for="coupon">Coupon code (optional)</label>
+          <div class="row" style="flex-wrap:nowrap">
+            <input class="input" id="coupon" name="coupon" value="{{ coupon }}" placeholder="e.g. WELCOME10" autocapitalize="characters" style="text-transform:uppercase">
+            <button class="btn-secondary" type="submit" name="place" value="0" formnovalidate>Apply</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="summary-row"><span>Items</span><span>{{ format_inr(quote.subtotal) }}</span></div>
+          {% if quote.discount %}<div class="summary-row" style="color:var(--ok)"><span>Coupon {{ quote.couponCode }}</span><span>− {{ format_inr(quote.discount) }}</span></div>{% endif %}
+          <div class="summary-row"><span>Delivery</span><span>{{ format_inr(quote.deliveryCharge) if quote.deliveryCharge else 'Free' }}</span></div>
+          <div class="summary-row total"><span>To pay</span><span>{{ format_inr(quote.total) }}</span></div>
+        </div>
+
+        <button class="btn btn-block" type="submit" name="place" value="1" style="min-height:52px;font-size:1rem">Place order · {{ format_inr(quote.total) }}</button>
+        <p class="muted small" style="margin:0">After you place the order you'll see a confirmation page and get an email. You can track your order anytime from "Track".</p>
+      </aside>
+    </form>
+  </div>
+</section>
+{% endblock %}

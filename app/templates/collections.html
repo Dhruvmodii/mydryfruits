@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Collections | {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container">
+    <h1>Collections</h1>
+    <div class="grid cards-3" style="margin-top:1.5rem">
+      {% for c in collections %}
+      <a class="card" href="{{ url_for('store.collection_detail', slug=c.slug) }}">
+        {% if c.imageUrl %}<img src="{{ c.imageUrl }}" alt="{{ c.name }}">{% endif %}
+        <h3>{{ c.name }}</h3>
+        <p class="muted">{{ c.description }}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

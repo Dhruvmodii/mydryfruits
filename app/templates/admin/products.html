@@ -1,0 +1,31 @@
+{% extends "admin/base.html" %}
+{% block title %}Products{% endblock %}
+{% block admin %}
+<h1>Products</h1>
+<form method="post" class="card grid" style="gap:.5rem;margin:1rem 0">
+  <input class="input" name="name" required placeholder="Name">
+  <input class="input" name="pricePerKg" type="number" step="0.01" required placeholder="Price / kg">
+  <input class="input" name="imageUrl" placeholder="Image URL">
+  <select class="input" name="categoryId" required>
+    {% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+  </select>
+  <label><input type="checkbox" name="inStock" checked> In stock</label>
+  <label><input type="checkbox" name="isFeatured"> Featured</label>
+  <button class="btn" type="submit">Add product</button>
+</form>
+<table>
+  <tr><th>Name</th><th>Price</th><th></th></tr>
+  {% for p in items %}
+  <tr>
+    <td>{{ p.name }}</td>
+    <td>{{ format_inr(p.pricePerKg) }}</td>
+    <td>
+      <form method="post">
+        <input type="hidden" name="id" value="{{ p.id }}">
+        <button class="btn-secondary" name="action" value="delete">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

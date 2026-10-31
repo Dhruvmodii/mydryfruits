@@ -1,0 +1,19 @@
+{% extends "admin/base.html" %}
+{% block title %}Reviews{% endblock %}
+{% block admin %}
+<h1>Reviews</h1>
+<form method="post" class="card grid" style="gap:.5rem;margin:1rem 0">
+  <input class="input" name="customerName" required placeholder="Name">
+  <input class="input" name="rating" type="number" min="1" max="5" value="5">
+  <input class="input" name="productName" placeholder="Product">
+  <textarea class="input" name="comment" required placeholder="Comment"></textarea>
+  <button class="btn" type="submit">Add</button>
+</form>
+{% for r in items %}
+<div class="card" style="margin-top:.5rem">
+  <strong>{{ r.customerName }}</strong> {{ r.rating }}★
+  <p>{{ r.comment }}</p>
+  <form method="post"><input type="hidden" name="id" value="{{ r.id }}"><button name="action" value="delete" class="btn-secondary">Delete</button></form>
+</div>
+{% endfor %}
+{% endblock %}

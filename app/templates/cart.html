@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Your cart | {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section" style="padding-top:1.25rem">
+  <div class="container">
+    <h1>Your cart</h1>
+    {% if not lines %}
+    <div class="panel empty">
+      {{ icon("cart") }}
+      <h2>Your cart is empty</h2>
+      <p class="muted">Add a few products and they will show up here.{% if me %} Or order again from your past orders.{% endif %}</p>
+      <div class="row" style="justify-content:center">
+        <a class="btn" href="{{ url_for('store.shop') }}">Start shopping</a>
+        {% if me %}<a class="btn-secondary" href="{{ url_for('store.my_orders') }}">{{ icon("repeat") }} Order again</a>{% endif %}
+      </div>
+    </div>
+    {% else %}
+    <p class="muted">{{ cart_count }} item{{ '' if cart_count == 1 else 's' }} · Change the quantity with − and +.</p>
+    <div class="cart-layout">
+      <div class="stack">
+        {% for i in lines %}
+        <article class="cart-line">
+          <a href="{{ url_for('store.product', slug=i.slug) }}"><img src="{{ i.imageUrl or 'https://placehold.co/200x200/efe9df/1b4332?text=MDF' }}" alt="{{ i.name }}"></a>
+          <div>
+            <h3><a href="{{ url_for('store.product', slug=i.slug) }}">{{ i.name }}</a></h3>
+            <p class="muted small" style="margin:0">{{ format_weight(i.weightGrams) }} pack · {{ format_inr(i.unit) }} each</p>
+            <div class="cart-line-actions">
+              <form method="post" action="{{ url_for('store.cart_update') }}" class="qty" aria-label="Quantity for {{ i.name }}">
+                <input type="hidden" name="productId" value="{{ i.productId }}">
+                <input type="hidden" name="weightGrams" value="{{ i.weightGrams }}">
+                <button name="action" value="dec" aria-label="One less" {% if i.quantity <= 1 %}disabled style="opacity:.35"{% endif %}>−</button>
+                <output>{{ i.quantity }}</output>
+                <button name="action" value="inc" aria-label="One more" {% if i.quantity >= 20 %}disabled style="opacity:.35"{% endif %}>+</button>
+              </form>
+              <strong class="price">{{ format_inr(i.lineTotal) }}</strong>
+            </div>
+            <form method="post" action="{{ url_for('store.cart_update') }}">
+              <input type="hidden" name="productId" value="{{ i.productId }}">
+              <input type="hidden" name="weightGrams" value="{{ i.weightGrams }}">
+              <button class="remove-btn" name="action" value="remove">Remove</button>
+            </form>
+          </div>
+        </article>
+        {% endfor %}
+        <a class="link small" href="{{ url_for('store.shop') }}">+ Add more products</a>
+      </div>
+      <aside class="panel">
+        <h2 style="font-size:1.2rem">Order summary</h2>
+        <div class="summary-row"><span>Items ({{ cart_count }})</span><span>{{ format_inr(subtotal) }}</span></div>
+        <div class="summary-row muted small"><span>Coupon</span><span>Add at next step</span></div>
+        <div class="summary-row total"><span>Total</span><span>{{ format_inr(subtotal) }}</span></div>
+        <a class="btn btn-block" href="{{ url_for('store.checkout') }}" style="margin-top:.75rem">Continue to address</a>
+        <p class="muted small" style="margin:.75rem 0 0">Next: enter your name, phone and address. No account or password needed.</p>
+      </aside>
+    </div>
+    <div class="mobile-bar">
+      <div><div class="small muted">Total</div><div class="total">{{ format_inr(subtotal) }}</div></div>
+      <a class="btn" href="{{ url_for('store.checkout') }}">Checkout →</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

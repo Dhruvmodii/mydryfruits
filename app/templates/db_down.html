@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Database offline{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="container" style="max-width:640px">
+    <h1>Database is offline</h1>
+    <p>{{ error }}</p>
+    {% if on_vercel %}
+    <ol>
+      <li>Open <a href="https://console.neon.tech" target="_blank" rel="noreferrer">console.neon.tech</a> and create a free project.</li>
+      <li>Copy the connection string (use the <strong>pooled</strong> one if shown).</li>
+      <li>Vercel → mydryfruits → Settings → Environment Variables → <code>DATABASE_URL</code> = that string.</li>
+      <li>Also set <code>JWT_SECRET</code> (32+ characters) and <code>SITE_URL=https://mydryfruits.vercel.app</code>.</li>
+      <li>Redeploy, then refresh.</li>
+    </ol>
+    {% else %}
+    <p class="muted">Set <code>DATABASE_URL</code> in <code>.env</code> to your Neon URI, or start XAMPP MySQL for local MySQL.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

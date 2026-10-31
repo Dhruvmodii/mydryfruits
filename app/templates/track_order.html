@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Tracking {{ order.orderNumber }} | {{ site_name }}{% endblock %}
+{% block content %}
+{% set tr = t.tracking %}
+<section class="section" style="padding-top:1.25rem">
+  <div class="container" style="max-width:880px">
+    <a class="link small" href="{{ url_for('store.my_orders') }}">← My orders</a>
+    <div class="row between" style="margin:.5rem 0 1rem">
+      <div>
+        <h1 style="margin:0">Order {{ order.orderNumber }}</h1>
+        <div class="muted small">Placed {{ order.createdAt | ist_full }}</div>
+      </div>
+      <span class="pill {{ order.status }}">{{ t.statusLabel }}</span>
+    </div>
+
+    <div class="stack">
+      <div class="eta {{ t.state }}">
+        <div class="small muted">
+          {% if t.cancelled %}Status{% elif order.status == 'DELIVERED' %}Delivered{% else %}Expected delivery{% endif %}
+        </div>
+        {% if order.status == 'DELIVERED' and t.deliveredAt %}
+          <div class="when">{{ t.deliveredAt }}</div>
+        {% elif t.expected %}
+          <div class="when">{{ t.expected }}</div>
+        {% endif %}
+        <p style="margin:0">{{ t.message }}</p>
+        {% if tr.customerNote %}<p class="small" style="margin:.5rem 0 0"><strong>Note from us:</strong> {{ tr.customerNote }}</p>{% endif %}
+      </div>
+
+      <div class="panel">
+        {% set horizontal = True %}
+        {% include "_progress.html" %}
+      </div>
+
+      {% if tr.courierName or tr.trackingUrl %}
+      <div class="panel row between">
+        <div>
+          <div class="small muted">Courier</div>
+          <strong>{{ tr.courierName or 'Courier partner' }}</strong>
+        </div>
+        {% if tr.trackingUrl %}<a class="btn-secondary btn-sm" href="{{ tr.trackingUrl }}" target="_blank" rel="noopener">Courier tracking ↗</a>{% endif %}
+      </div>
+      {% endif %}
+
+      <div class="panel">
+        <h2 style="font-size:1.15rem">Items</h2>
+        <div class="mini-items">
+          {% for i in order.items %}
+          <div class="mini-item">
+            <img src="{{ i.imageUrl or 'https://placehold.co/100x100/efe9df/1b4332?text=MDF' }}" alt="">
+            <span>{{ i.productName }}<br><span class="muted small">{{ format_weight(i.weightGrams) }} × {{ i.quantity }}</span></span>
+            <strong>{{ format_inr(i.lineTotal) }}</strong>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="summary-row total" style="margin-top:.5rem"><span>Total</span><span>{{ format_inr(order.total) }}</span></div>
+        <p class="small" style="margin:.75rem 0 0"><strong>Delivering to:</strong> {% if limited %}{{ order.city }} {{ order.pincode }}{% else %}{{ order.addressLine1 }}{% if order.addressLine2 %}, {{ order.addressLine2 }}{% endif %}, {{ order.city }} {{ order.pincode }}{% endif %}</p>
+      </div>
+
+      <div class="row">
+        <form method="post" action="{{ url_for('store.reorder', order_number=order.orderNumber) }}">
+          <button class="btn-secondary" type="submit">{{ icon("repeat") }} Order again</button>
+        </form>
+        <a class="btn-secondary" href="{{ url_for('store.invoice', order_number=order.orderNumber) }}">{{ icon("orders") }} Invoice</a>
+        <a class="btn-ghost" href="{{ url_for('store.contact') }}">{{ icon("phone") }} Need help?</a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

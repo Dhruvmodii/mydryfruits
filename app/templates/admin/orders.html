@@ -1,0 +1,50 @@
+{% extends "admin/base.html" %}
+{% block title %}Orders{% endblock %}
+{% block admin %}
+<div class="row between">
+  <h1 style="margin:0">Orders</h1>
+  <a class="btn-secondary btn-sm" href="{{ url_for('admin.tracking_settings') }}">Tracking settings</a>
+</div>
+<p class="muted small">Statuses move forward automatically using your <a class="link" href="{{ url_for('admin.tracking_settings') }}">tracking settings</a>. Change one here any time, or open an order to set the delivery time, courier and a note for the customer.</p>
+
+<nav class="chips" aria-label="Filter by status" style="margin-bottom:.75rem">
+  <a class="chip {{ 'active' if not status_filter }}" href="{{ url_for('admin.orders') }}">All ({{ counts.values() | sum }})</a>
+  {% for s in statuses %}
+    <a class="chip {{ 'active' if status_filter == s }}" href="{{ url_for('admin.orders', status=s) }}">{{ labels[s] }} ({{ counts.get(s, 0) }})</a>
+  {% endfor %}
+</nav>
+
+{% if items %}
+<div class="table-wrap">
+<table>
+  <tr><th>Order</th><th>Customer</th><th>Total</th><th>Delivery</th><th>Status</th><th></th></tr>
+  {% for o in items %}
+  {% set t = views[o.id] %}
+  <tr class="{% if highlight == o.orderNumber %}highlight{% endif %}">
+    <td><strong>{{ o.orderNumber }}</strong><br><span class="muted small">{{ o.createdAt | ist_full }}</span></td>
+    <td>{{ o.customerName }}<br><span class="muted small">{{ (o.customer.phone if o.customer and o.customer.phone else '') }} {{ o.customerEmail }}</span></td>
+    <td>{{ format_inr(o.total) }}</td>
+    <td class="small">
+      {% if t.state == 'late' %}<span class="badge red">Late</span><br>{% endif %}
+      {{ t.deliveredAt if o.status == 'DELIVERED' else (t.tracking.estimatedFrom and t.expected or '') }}
+      {% if t.nextAuto %}<br><span class="muted">Auto → {{ t.nextAuto.label }} at {{ t.nextAuto.at }}</span>{% endif %}
+    </td>
+    <td>
+      <form method="post">
+        <input type="hidden" name="id" value="{{ o.id }}">
+        <select class="input" name="status" style="min-height:40px;min-width:150px" onchange="this.form.submit()" aria-label="Status for {{ o.orderNumber }}">
+          {% for s in statuses %}
+            <option value="{{ s }}" {% if o.status == s %}selected{% endif %}>{{ labels[s] }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </td>
+    <td><a class="btn-secondary btn-sm" href="{{ url_for('admin.order_detail', order_id=o.id) }}">Manage</a></td>
+  </tr>
+  {% endfor %}
+</table>
+</div>
+{% else %}
+<div class="panel empty"><p class="muted">No orders{% if status_filter %} with this status{% endif %} yet.</p></div>
+{% endif %}
+{% endblock %}

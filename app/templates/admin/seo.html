@@ -1,0 +1,17 @@
+{% extends "admin/base.html" %}
+{% block title %}SEO{% endblock %}
+{% block admin %}
+<h1>SEO</h1>
+<form method="post" class="card grid" style="gap:.5rem;margin:1rem 0">
+  <input class="input" name="path" value="/" placeholder="Path">
+  <input class="input" name="title" placeholder="Title">
+  <textarea class="input" name="description" placeholder="Description"></textarea>
+  <input class="input" name="keywords" placeholder="Keywords">
+  <button class="btn" type="submit">Save</button>
+</form>
+<table>
+  {% for i in items %}
+  <tr><td>{{ i.path }}</td><td>{{ i.title }}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

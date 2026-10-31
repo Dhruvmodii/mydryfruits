@@ -1,0 +1,11 @@
+{% extends "admin/base.html" %}
+{% block title %}Bulk{% endblock %}
+{% block admin %}
+<h1>Bulk enquiries</h1>
+<table>
+  <tr><th>Name</th><th>Email</th><th>Product</th><th>Qty</th></tr>
+  {% for i in items %}
+  <tr><td>{{ i.name }}</td><td>{{ i.email }}</td><td>{{ i.productName }}</td><td>{{ i.requiredQuantity }}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

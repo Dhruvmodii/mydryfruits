@@ -1,0 +1,11 @@
+{% extends "admin/base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block admin %}
+<h1>Analytics</h1>
+<table>
+  <tr><th>Type</th><th>Path</th><th>When</th></tr>
+  {% for e in events %}
+  <tr><td>{{ e.type }}</td><td>{{ e.path }}</td><td>{{ e.createdAt }}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

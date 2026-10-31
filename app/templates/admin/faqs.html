@@ -1,0 +1,17 @@
+{% extends "admin/base.html" %}
+{% block title %}FAQ{% endblock %}
+{% block admin %}
+<h1>FAQ</h1>
+<form method="post" class="card grid" style="gap:.5rem;margin:1rem 0">
+  <input class="input" name="question" required placeholder="Question">
+  <textarea class="input" name="answer" required placeholder="Answer"></textarea>
+  <button class="btn" type="submit">Add</button>
+</form>
+{% for f in items %}
+<div class="card" style="margin-top:.5rem">
+  <strong>{{ f.question }}</strong>
+  <p class="muted">{{ f.answer }}</p>
+  <form method="post"><input type="hidden" name="id" value="{{ f.id }}"><button name="action" value="delete" class="btn-secondary">Delete</button></form>
+</div>
+{% endfor %}
+{% endblock %}
