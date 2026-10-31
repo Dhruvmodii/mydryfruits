@@ -2,6 +2,7 @@
   "framework": null,
   "installCommand": "echo skip-npm",
   "buildCommand": "echo skip-node-build",
+  "outputDirectory": "app/static",
   "rewrites": [
     { "source": "/(.*)", "destination": "/api/index" }
   ],
